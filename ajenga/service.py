@@ -305,12 +305,17 @@ class Service:
 
     def get_user_priv(self, uid_or_ctx: Union[int, Event]) -> int:
         if isinstance(uid_or_ctx, int):
-            return self.user_privs.get(uid_or_ctx, Privilege.DEFAULT)
+            if uid_or_ctx in ajenga.get_bot().config.SUPERUSERS:
+                return Privilege.SUPERUSER
+            else:
+                return self.user_privs.get(uid_or_ctx, Privilege.DEFAULT)
         elif isinstance(uid_or_ctx, Event):
             uid = uid_or_ctx.user_id
             ev_priv = self.get_priv_from_event(uid_or_ctx)
             sv_priv = self.user_privs.get(uid, Privilege.DEFAULT)
-            if ev_priv == Privilege.BLACK or sv_priv == Privilege.BLACK:
+            if uid in ajenga.get_bot().config.SUPERUSERS:
+                return Privilege.SUPERUSER
+            elif ev_priv == Privilege.BLACK or sv_priv == Privilege.BLACK:
                 return Privilege.BLACK
             else:
                 return max(ev_priv, sv_priv)
@@ -495,7 +500,7 @@ class Service:
                 for kw in keywords:
                     if kw in plain_text:
                         try:
-                            ret = run_async(func, self.bot, ctx)
+                            ret = await run_async(func, self.bot, ctx)
                         except FinishedException as e:
                             ret = e.success
                             self.logger.info(
