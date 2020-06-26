@@ -44,18 +44,3 @@ class DailyNumberLimiter:
 
     def reset(self, key):
         self.count[key] = 0
-
-
-def load_config(inbuilt_file_var):
-    """
-    Just use `config = load_config(__file__)`,
-    you can get the config.json as a dict.
-    """
-    filename = os.path.join(os.path.dirname(inbuilt_file_var), 'config.json')
-    try:
-        with open(filename, encoding='utf8') as f:
-            config = json.load(f)
-            return config
-    except Exception as e:
-        logger.exception(e)
-        return {}

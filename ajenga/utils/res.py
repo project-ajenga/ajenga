@@ -121,15 +121,12 @@ class ResObj:
 class ResImg(ResObj):
 
     @property
-    def cqcode(self, url=False) -> MessageSegment:
-        if url:
-            return MessageSegment.image(f'file:///{os.path.abspath(self.path)}')
-        else:
-            try:
-                return MessageSegment.image(pic2b64(self.open()))
-            except Exception as e:
-                logger.exception(e)
-                return MessageSegment.text('[图片]')
+    def cqcode(self) -> MessageSegment:
+        try:
+            return MessageSegment.image(pic2b64(self.open()))
+        except Exception as e:
+            logger.exception(e)
+            return MessageSegment.text('[图片]')
 
     def open(self) -> Image:
         try:
