@@ -23,6 +23,10 @@ meta_provider = MetaProvider()
 
 class BotSession(EventProvider):
 
+    @property
+    def qq(self) -> int:
+        raise NotImplementedError()
+
     async def handle_event(self, event: Event):
         return await handle_event(self, event)
 
@@ -98,14 +102,15 @@ async def handle_event(source: EventProvider, event: Event, **kwargs):
     return res
 
 
-def register_session(qq: int, session: BotSession):
+def register_session(session: BotSession, qq: int = None):
+    qq = qq or session.qq
     if qq in _sessions:
         logger.warning(f'A session already registered to {qq} !')
     _sessions[qq] = session
     _sessions_inverse[id(session)] = qq
 
 
-def unregister_session(qq: int, session: BotSession) -> bool:
+def unregister_session(qq: int) -> bool:
     if qq in _sessions:
         try:
             del _sessions_inverse[id(_sessions[qq])]
@@ -120,3 +125,7 @@ def unregister_session(qq: int, session: BotSession) -> bool:
 
 def get_session(qq: int) -> Optional[BotSession]:
     return _sessions.get(qq)
+
+
+def get_sessions() -> Dict[int, BotSession]:
+    return _sessions.copy()

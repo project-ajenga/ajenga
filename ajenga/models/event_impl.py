@@ -2,13 +2,7 @@ from enum import Enum
 
 from ajenga.models.event import Event, EventType, EventProvider
 from ajenga.models.message import MessageChain, MessageType
-
-
-class GroupPermission(Enum):
-    OWNER = "OWNER"
-    ADMIN = "ADMIN"
-    MEMBER = "MEMBER"
-    NONE = ""
+from ajenga.models.contact import GroupPermission
 
 
 class Sender:

@@ -5,9 +5,11 @@ from datetime import datetime
 from functools import wraps
 from typing import Set, Optional, Union, Dict, Any, Callable, final, List
 
+import pytz
 from apscheduler.schedulers.asyncio import AsyncIOScheduler as Scheduler
 
 import ajenga
+from ajenga.models.message import Message_T
 from ajenga.protocol import Api
 from ajenga.log import logger, Logger
 from ajenga.models.event_impl import GroupMessageEvent, GroupPermission, FriendMessageEvent, TempMessageEvent
@@ -73,7 +75,7 @@ class Privilege:
     OWNER = 150
     WHITE = 200
     SUPERUSER = 990
-    BACKEND = 995
+    TERMINAL = 995
     NOBODY = 1000
 
 
@@ -171,6 +173,8 @@ class Service:
         required_priv = self.use_priv if required_priv is None else required_priv
         user_priv = self.get_user_priv(event)
         # self.logger.debug(f'Checking priv for {event}: {self.check_enabled(event.group)} {required_priv} {user_priv}')
+        if event.type == EventType.Meta:
+            return True
         if isinstance(event, GroupMessageEvent):
             if not self.check_enabled(event.group):
                 return False
@@ -274,10 +278,10 @@ class Service:
         member_info = await api.get_group_member_info(
             group=event.group,
             qq=qq)
-        if member_info:
-            if member_info['role'] == 'owner':
+        if member_info.ok:
+            if member_info.data.permission == GroupPermission.OWNER:
                 return max(priv, Privilege.OWNER)
-            elif member_info['role'] == 'admin':
+            elif member_info.data.permission == GroupPermission.ADMIN:
                 return max(priv, Privilege.ADMIN)
             else:
                 return max(priv, Privilege.GROUP)
@@ -327,9 +331,47 @@ class Service:
     def check_enabled(self, group: int):
         return bool((group in self.enable_group) or (self.enable_on_default and group not in self.disable_group))
 
+    async def get_enabled_groups(self) -> dict:
+        ret = {}
+        for qq, ses in app.get_sessions().items():
+            group_list = await ses.api.get_group_list()
+            for group in group_list.data:
+                if self.check_enabled(group.id_):
+                    ret[group.id_] = qq
+        return ret
+
+    def scheduled_job(self, *args, **kwargs) -> Callable:
+        kwargs.setdefault('timezone', pytz.timezone('Asia/Shanghai'))
+        kwargs.setdefault('misfire_grace_time', 60)
+        kwargs.setdefault('coalesce', True)
+
+        def deco(func: Callable) -> Callable:
+            @wraps(func)
+            async def wrapper():
+                try:
+                    self.logger.info(f'Scheduled job {func.__name__} started.')
+                    await func()
+                except Exception as e:
+                    self.logger.exception(e)
+                    self.logger.error(f'{type(e)} occurred when doing scheduled job {func.__name__}.')
+
+            return self.scheduler.scheduled_job(*args, **kwargs)(wrapper)
+        return deco
+
+    async def broadcast(self, messages: Message_T, *, interval=0.2):
+        groups = await self.get_enabled_groups()
+        for group, qq in groups.items():
+            try:
+                for message in messages:
+                    await app.get_session(qq).api.send_group_message(group=group, message=message)
+                    await asyncio.sleep(interval)
+            except Exception as e:
+                self.logger.exception(e)
+                self.logger.error(f"Failed to broadcast to group {group}")
+
 
 def set_current_plugin(plugin: "Plugin") -> None:
-    """Set current ajenga_plugin so the loading service can get its ajenga_plugin
+    """Set current plugin so the loading service can get its plugin
 
     :param plugin: Plugin
     :return:

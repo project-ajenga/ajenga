@@ -15,12 +15,17 @@ from .keyfunc import KeyFunction, KeyFunctionImpl, first_argument
 class HandlerNode(TerminalNode, AbsNode):
     _func: Callable
 
-    def __init__(self, func):
+    def __init__(self, func, *args, **kwargs):
         super().__init__()
         self._func = wrap_function(func)
+        self.args = args
+        self.kwargs = kwargs
+
+    def __repr__(self):
+        return repr(self._func)
 
     def copy(self) -> "HandlerNode":
-        return HandlerNode(self._func)
+        return HandlerNode(self._func, *self.args, **self.kwargs)
 
     async def forward(self, *args, **kwargs) -> Any:
         return await self._func(*args, **kwargs)
@@ -269,3 +274,9 @@ suspend = make_graph_deco(SuspendNode)
 
 def store_(name: str, func: Callable) -> Graph:
     return make_graph_deco(ProcessorNode)(KeyFunctionImpl(func, key=name))
+
+
+def handler(*args, **kwargs) -> Callable:
+    def deco(func: Callable) -> HandlerNode:
+        return HandlerNode(func, *args, **kwargs)
+    return deco

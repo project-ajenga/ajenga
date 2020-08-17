@@ -2,6 +2,7 @@ from abc import ABC
 from enum import Enum
 from typing import Optional, List, Dict, Any, Union, Type, TypeVar, Iterable
 
+import hashlib
 
 MessageIdType = int
 ImageIdType = str
@@ -218,6 +219,8 @@ class Image(MessageElement):
         self.url = url
         self.content = content
         self.hash_ = hash_
+        if self.content and not self.hash_:
+            self.hash_ = hashlib.md5(self.content).hexdigest()
 
     def __eq__(self, other):
         return isinstance(other, Image) and any((
@@ -225,6 +228,15 @@ class Image(MessageElement):
             self.url and self.url == other.url,
             self.content and self.content == other.content
         ))
+
+    @staticmethod
+    def from_(image: Any) -> "Optional[Image]":
+        try:
+            import PIL.Image
+            if isinstance(image, PIL.Image.Image):
+                return Image(content=image.tobytes())
+        except ImportError:
+            return None
 
 
 class Voice(MessageElement):
