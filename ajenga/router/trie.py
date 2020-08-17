@@ -130,8 +130,8 @@ class PrefixNode(AbsTrieNonterminalNode):
         if not isinstance(key, str):
             return
 
-        pair = self._successors.longest_prefix(key)
-        if pair:
+        # pair = self._successors.longest_prefix(key)
+        for pair in self._successors.prefixes(key):
             for node in pair.value:
                 if isinstance(node, TerminalNode):
                     yield node

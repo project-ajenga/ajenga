@@ -5,6 +5,8 @@ from datetime import datetime
 from functools import wraps
 from typing import Set, Optional, Union, Dict, Any, Callable, final, List
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler as Scheduler
+
 import ajenga
 from ajenga.protocol import Api
 from ajenga.log import logger, Logger
@@ -105,20 +107,28 @@ class Service:
     plugin: "Plugin"
     logger: Logger
 
-    def __init__(self, name=None, use_priv=None, manage_priv=None, enable_on_default=None, visible=None):
+    def __init__(self,
+                 name=None,
+                 *,
+                 use_priv=Privilege.DEFAULT,
+                 manage_priv=Privilege.ADMIN,
+                 enable_on_default=None,
+                 visible=None,
+                 ):
         self.name = name or 'base'
         self.plugin = _tmp_current_plugin
         self.logger = self.plugin.logger.getChild(self.name)
 
         config = _load_service_config(self.key)
 
-        self.use_priv = config.get('use_priv') or use_priv or Privilege.DEFAULT
-        self.manage_priv = config.get('manage_priv') or manage_priv or Privilege.ADMIN
+        self.use_priv = config.get('use_priv', use_priv)
+        self.manage_priv = config.get('manage_priv', manage_priv)
         self.enable_on_default = config.get('enable_on_default')
         if self.enable_on_default is None:
-            self.enable_on_default = enable_on_default
-        if self.enable_on_default is None:
-            self.enable_on_default = True
+            if enable_on_default is None:
+                self.enable_on_default = name is None
+            else:
+                self.enable_on_default = enable_on_default
         self.visible = config.get('visible')
         if self.visible is None:
             if visible is None:
@@ -129,15 +139,27 @@ class Service:
         self.disable_group = set(config.get('disable_group', []))
         self.user_privs = dict(config.get('user_privs', []))
 
-        self._node_key = PredicateFunction(lambda event: self.check_priv(event), notation=self)
-        self._node = PredicateNode(self._node_key)
+        # self._node_key = PredicateFunction(lambda event: self.check_priv(event), notation=self)
+        # self._node = PredicateNode(self._node_key)
         self._sv_node = router.meta_service_is(self)
         self._terminals: Set[TerminalNode] = set()
+
+        self._scheduler = Scheduler()
+
+        @self.on_loaded()
+        def _start_scheduler():
+            if self._scheduler and not self._scheduler.running and self._scheduler.get_jobs():
+                self._scheduler.configure(ajenga.config.APSCHEDULER_CONFIG)
+                self._scheduler.start()
 
         @self.on_unload()
         def _on_unload():
             self.logger.info(f'Unloading... Unsubscribe all {len(self._terminals)} subscribers.')
             app._engine.unsubscribe_terminals(self._terminals)
+
+            # Stop scheduler
+            if self._scheduler and self._scheduler.running:
+                self._scheduler.remove_all_jobs()
 
         # Add to service list
         if self.key in _loaded_services:
@@ -145,7 +167,7 @@ class Service:
         _loaded_services[self.key] = self
         self.plugin.add_service(self)
 
-    def check_priv(self, event: Event, required_priv: Optional[Union[int, Callable[[int], bool]]] = None):
+    def check_priv(self, event: Event, required_priv: Union[int, Callable[[int], bool]] = None):
         required_priv = self.use_priv if required_priv is None else required_priv
         user_priv = self.get_user_priv(event)
         # self.logger.debug(f'Checking priv for {event}: {self.check_enabled(event.group)} {required_priv} {user_priv}')
@@ -169,11 +191,16 @@ class Service:
     def __str__(self):
         return f'<Service: {self.key}>'
 
-    def on(self, graph=std.true):
-        return ServiceGraphImpl(self) & graph & self._node
+    @property
+    def scheduler(self) -> Scheduler:
+        return self._scheduler
 
-    def on_message(self, graph=std.true):
-        return self.on(router.message.is_message & graph)
+    def on(self, graph=std.true, *, priv: Union[int, Callable[[int], bool]] = None):
+        return ServiceGraphImpl(self) & graph & PredicateNode(
+            PredicateFunction(lambda event: self.check_priv(event, required_priv=priv), notation=self))
+
+    def on_message(self, graph=std.true, *, priv: Union[int, Callable[[int], bool]] = None):
+        return self.on(router.message.is_message & graph, priv=priv)
 
     def on_loaded(self, arg: Any = None):
         g = (ServiceGraphImpl(self) &

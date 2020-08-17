@@ -5,8 +5,8 @@ from typing import Dict, Optional
 from ajenga.models.meta import MetaEvent
 from ajenga_router.engine import Engine
 from ajenga.protocol.api import Api
-from ajenga.models.event_impl import MessageEvent
-from ajenga.models.message import Message_T, MessageElement
+from ajenga.models.event_impl import MessageEvent, GroupMessageEvent, FriendMessageEvent, TempMessageEvent
+from ajenga.models.message import Message_T, MessageElement, MessageChain, At
 from ajenga.models.event import Event, EventType, EventProvider
 import ajenga.router as router
 from ajenga.log import logger
@@ -39,8 +39,20 @@ class BotSession(EventProvider):
     def api(self) -> Api:
         raise NotImplementedError()
 
-    async def send(self, event: MessageEvent, message: Message_T):
-        raise NotImplementedError()
+    async def send(self, event: MessageEvent, message: Message_T, at_sender: bool = False):
+        if at_sender and isinstance(event, GroupMessageEvent):
+            message = MessageChain(message)
+            message.insert(0, At(event.sender.qq))
+
+        return await self._send(event, message)
+
+    async def _send(self, event: MessageEvent, message: Message_T):
+        if isinstance(event, GroupMessageEvent):
+            await self.api.send_group_message(group=event.group, message=message)
+        elif isinstance(event, FriendMessageEvent):
+            await self.api.send_friend_message(qq=event.sender.qq, message=message)
+        elif isinstance(event, TempMessageEvent):
+            await self.api.send_temp_message(qq=event.sender.qq, group=event.group, message=message)
 
     def wrap_message(self, message: MessageElement) -> MessageElement:
         raise NotImplementedError()
@@ -69,7 +81,9 @@ async def handle_event(source: EventProvider, event: Event, **kwargs):
 
     logger.debug(f'Handling {event.type} {event}')
 
-    # print(_engine.graph.debug_fmt())
+    if isinstance(source, BotSession):
+        kwargs['bot'] = source
+
     res = []
 
     async for result in _engine.forward(event=event, source=source, **kwargs):
