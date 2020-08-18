@@ -358,7 +358,7 @@ class Service:
             return self.scheduler.scheduled_job(*args, **kwargs)(wrapper)
         return deco
 
-    async def broadcast(self, messages: Message_T, *, interval=0.2):
+    async def broadcast(self, *messages: Message_T, interval=0.2):
         groups = await self.get_enabled_groups()
         for group, qq in groups.items():
             try:

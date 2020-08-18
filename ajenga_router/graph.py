@@ -4,6 +4,7 @@ from typing import List, Any, Set, Callable, Dict, Iterable, Union, AsyncIterabl
 from collections import deque
 
 from .exceptions import RouteFilteredException
+from .utils import gather, as_completed
 
 
 class Node(ABC):
@@ -247,7 +248,7 @@ class IdentityNode(NonterminalNode, AbsNode):
                 break
         else:
             self._successors.add(node)
-            node.add_predecessor((self, ))
+            node.add_predecessor((self,))
 
     def remove_successor(self, node):
         if node in self._successors:
@@ -294,6 +295,7 @@ class Graph:
     def __init__(self, start=None, closed=False):
         self._start = start or IdentityNode()
         self._closed = closed
+        self.num_workers = 20
 
     @property
     def start(self) -> IdentityNode:
@@ -513,21 +515,11 @@ class Graph:
         for filter_ in filters:
             terminals = filter(filter_, terminals)
 
-        # terminals = list([x async for x in self.start.route(*args, **kwargs)])
         # print(terminals)
+        coroutines = list(map(lambda x: x.forward(*args, **kwargs), terminals))
 
-        pending = list(map(lambda x: asyncio.create_task(x.forward(*args, **kwargs)), terminals))
-
-        while pending:
-            done, pending = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
-            for task in done:
-                if task.exception():
-                    yield task.exception()
-                else:
-                    yield task.result()
-
-        # for terminal in terminals:
-        #     yield await terminal.forward(*args, **kwargs)
+        async for res in as_completed(*coroutines, num_workers=self.num_workers):
+            yield res
 
     def debug_fmt(self, indent=1) -> str:
         """Format the debug string

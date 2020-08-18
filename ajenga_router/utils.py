@@ -1,7 +1,8 @@
 import inspect
 import typing
 from functools import wraps
-from typing import List, Any, Set, Callable, Dict, Iterator, Iterable, Union, Awaitable, AsyncIterable, final, Hashable
+from typing import (List, Any, Set, Callable, Dict, Iterator, Iterable, Union,
+                    Awaitable, AsyncIterable, final, Hashable, Coroutine)
 import asyncio
 
 T = typing.TypeVar("T")
@@ -64,12 +65,78 @@ async def consume_async_iterator(ait: AsyncIterable[T]) -> List[T]:
     return result
 
 
-def max_instances(number):
+async def gather(*coroutines: Coroutine, num_workers: int = None, return_exceptions: bool = ...):
+    if not num_workers:
+        return await asyncio.gather(*coroutines, return_exceptions=return_exceptions)
+
+    queue = asyncio.Queue(maxsize=num_workers)
+    # lock = asyncio.Lock()
+    index = 0
+    result: List[Any] = [None] * len(coroutines)
+    future = asyncio.Future()
+
+    async def worker():
+        while True:
+            nonlocal index
+            work = await queue.get()
+            # async with lock:
+            i = index
+            index += 1
+            try:
+                result[i] = await work
+            except Exception as e:
+                if return_exceptions:
+                    result[i] = e
+                else:
+                    future.set_exception(e)
+                    queue.task_done()
+
+            queue.task_done()
+
+    workers = [asyncio.create_task(worker()) for _ in range(num_workers)]
+
+    for coroutine in coroutines:
+        await asyncio.wait([queue.put(coroutine), future], return_when=asyncio.FIRST_COMPLETED)
+
+    await asyncio.wait([queue.join(), future], return_when=asyncio.FIRST_COMPLETED)
+
+    future.cancel()
+
+    for w in workers:
+        w.cancel()
+
+    return result
+
+
+async def as_completed(*coroutines: Coroutine,
+                       num_workers: int = None,
+                       return_exceptions: bool = True,
+                       ) -> AsyncIterable:
+    pending = set()
+    index = 0
+    while True:
+        while index < len(coroutines) and (not num_workers or len(pending) < num_workers):
+            pending.add(coroutines[index])
+            index += 1
+        if pending:
+            done, pending = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
+            for task in done:
+                if task.exception() and return_exceptions:
+                    yield task.exception()
+                else:
+                    yield await task
+        else:
+            break
+
+
+def max_instances(number, ignore=False, ignore_func=None):
     def deco(func):
         _sem = asyncio.Semaphore(number)
 
         @wraps(func)
         async def wrapper(*args, **kwargs):
+            if ignore and _sem.locked():
+                return await ignore_func(*args, **kwargs) if ignore_func else None
             async with _sem:
                 return await func(*args, **kwargs)
 
