@@ -219,7 +219,15 @@ class Image(MessageElement):
         self.url = url
         self.content = content
         self.hash_ = hash_
-        if self.content and not self.hash_:
+
+    @property
+    def content(self) -> bytes:
+        return self._content
+
+    @content.setter
+    def content(self, value):
+        self._content = value
+        if value:
             self.hash_ = hashlib.md5(self.content).hexdigest()
 
     def __eq__(self, other):
@@ -228,15 +236,6 @@ class Image(MessageElement):
             self.url and self.url == other.url,
             self.content and self.content == other.content
         ))
-
-    @staticmethod
-    def from_(image: Any) -> "Optional[Image]":
-        try:
-            import PIL.Image
-            if isinstance(image, PIL.Image.Image):
-                return Image(content=image.tobytes())
-        except ImportError:
-            return None
 
 
 class Voice(MessageElement):
@@ -273,5 +272,5 @@ class Unknown(MessageElement):
     type: MessageType = MessageType.Unknown
 
 
-MessageElement_T = Union[MessageElement, str, Dict[str, Any]]
+MessageElement_T = Union[MessageElement, str]
 Message_T = Union[MessageElement_T, List[MessageElement_T]]

@@ -1,3 +1,5 @@
+from io import BytesIO
+
 from ajenga.models.message import *
 import PIL.Image
 
@@ -29,6 +31,7 @@ class Builder:
                element,
                *,
                eol: bool = True,
+               image_format: str = 'png',
                ):
         if isinstance(element, str):
             element = Plain(element)
@@ -46,10 +49,12 @@ class Builder:
         elif isinstance(element, MessageElement):
             self._chain.append(element)
         elif isinstance(element, PIL.Image.Image):
-            self._chain.append(Image(content=element.tobytes()))
+            with BytesIO() as buf:
+                element.save(buf, format=image_format)
+                self._chain.append(Image(content=buf.getvalue()))
         return self
 
-    def extend(self, elements: Iterable[MessageElement_T], *, eol: bool = True):
+    def extend(self, elements: Iterable[Any], *, eol: bool = True):
         for element in elements:
             self.append(element, eol=False)
         if self._chain and isinstance(self._chain[-1], Plain) and eol:
