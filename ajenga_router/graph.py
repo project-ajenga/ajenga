@@ -27,7 +27,7 @@ class Node(ABC):
         :param kwargs: For internal use
         :return: Copy
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @property
     def predecessors(self) -> "Set[Tuple[NonterminalNode, Hashable]]":
@@ -35,7 +35,7 @@ class Node(ABC):
 
         :return:
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @property
     def predecessor_nodes(self) -> "Set[Tuple[NonterminalNode]]":
@@ -43,16 +43,16 @@ class Node(ABC):
 
         :return:
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def add_predecessor(self, node: "Tuple[NonterminalNode, Hashable]"):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def remove(self):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     # def __eq__(self, other):
-    #     raise NotImplementedError()
+    #     raise NotImplementedError
     #
     # def __hash__(self):
     #     return hash(self.__id__)
@@ -64,7 +64,7 @@ class Node(ABC):
         :param verbose: Show object id_
         :return: Formatted string
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class TerminalNode(Node, ABC):
@@ -88,7 +88,7 @@ class TerminalNode(Node, ABC):
         :param kwargs:
         :return:
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def debug_fmt(self, indent=1, verbose=False) -> str:
         if verbose:
@@ -114,10 +114,10 @@ class NonterminalNode(Node, ABC):
         :return: AsyncIterator of Terminals
         """
         yield
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def copy(self, node_map: Dict[Node, Node] = ...) -> "NonterminalNode":
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @property
     def empty(self) -> bool:
@@ -125,14 +125,14 @@ class NonterminalNode(Node, ABC):
 
         :return:
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def clear(self):
         """Reinitialize the node, clear all successors
 
         :return:
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @property
     def successors(self) -> Iterable[Node]:
@@ -140,10 +140,10 @@ class NonterminalNode(Node, ABC):
 
         :return:
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     # def add_key(self, key):
-    #     raise NotImplementedError()
+    #     raise NotImplementedError
 
     def add_successor(self, node):
         """Add a successor
@@ -151,7 +151,7 @@ class NonterminalNode(Node, ABC):
         :param node: Successor node
         :return:
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def remove_successor(self, node):
         """Remove a successor
@@ -159,7 +159,7 @@ class NonterminalNode(Node, ABC):
         :param node:
         :return:
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def __ior__(self, other):
         """Merge with other equal node
@@ -167,7 +167,7 @@ class NonterminalNode(Node, ABC):
         :param other: Other node (with same type and id_)
         :return: Self
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def debug_fmt(self, indent=1, verbose=False) -> str:
         if verbose:
@@ -425,7 +425,7 @@ class Graph:
         return g
 
     def __call__(self, *args, **kwargs):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def _and(self, other):
         if self.closed:

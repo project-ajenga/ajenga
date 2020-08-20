@@ -12,7 +12,7 @@ class KeyFunction(ABC, Generic[T]):
         self.___id___ = id_
 
     async def __call__(self, *args, **kwargs) -> T:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @property
     def key(self) -> "Union[Hashable, KeyFunction]":

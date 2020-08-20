@@ -25,7 +25,7 @@ class BotSession(EventProvider):
 
     @property
     def qq(self) -> int:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     async def handle_event(self, event: Event):
         return await handle_event(self, event)
@@ -41,7 +41,7 @@ class BotSession(EventProvider):
 
     @property
     def api(self) -> Api:
-        raise NotImplementedError()
+        raise NotImplementedError
 
     async def send(self, event: MessageEvent, message: Message_T, at_sender: bool = False):
         if at_sender and isinstance(event, GroupMessageEvent):
@@ -59,7 +59,7 @@ class BotSession(EventProvider):
             await self.api.send_temp_message(qq=event.sender.qq, group=event.group, message=message)
 
     def wrap_message(self, message: MessageElement) -> MessageElement:
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 _engine = Engine()

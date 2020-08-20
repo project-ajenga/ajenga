@@ -19,7 +19,7 @@ class AbsTrieNonterminalNode(NonterminalNode, AbsNode):
 
     async def route(self, *args, **kwargs) -> AsyncIterable[TerminalNode]:
         yield ...
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def new(self) -> "AbsTrieNonterminalNode":
         return type(self)()
