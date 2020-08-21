@@ -1,7 +1,9 @@
 from io import BytesIO
+from typing import Any
 
-from ajenga.models.message import *
 import PIL.Image
+
+from ajenga.message import *
 
 
 class Builder:

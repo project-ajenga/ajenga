@@ -3,7 +3,10 @@ from typing import Optional
 
 import ajenga
 from ajenga.log import logger
-from . import get_plugin, Service, Plugin, get_current_plugin
+from . import Plugin
+from . import Service
+from . import get_current_plugin
+from . import get_plugin
 
 
 class DirectoryType:

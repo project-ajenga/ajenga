@@ -1,7 +1,8 @@
-import os
 import logging
-from logging import Logger
+import os
 import sys
+from logging import Logger
+
 import ajenga
 
 LOG_DIR: str = ajenga.config.LOG_DIR

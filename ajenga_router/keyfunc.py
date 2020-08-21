@@ -1,6 +1,9 @@
-import asyncio
 from abc import ABC
-from typing import Hashable, TypeVar, Generic, Callable, Union, Hashable
+from typing import Callable
+from typing import Generic
+from typing import Hashable
+from typing import TypeVar
+from typing import Union
 
 from .utils import wrap_function
 
@@ -69,5 +72,8 @@ class PredicateFunction(KeyFunction[bool]):
     #     else:
     #         return f'<{type(self).__name__}: {self._func}>'
 
+
+KeyFunction_T = Union[KeyFunction[T], Callable[..., T]]
+PredicateFunction_T = KeyFunction_T[bool]
 
 first_argument = KeyFunctionImpl(lambda _x_: _x_)

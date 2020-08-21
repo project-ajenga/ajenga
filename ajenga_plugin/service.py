@@ -3,24 +3,37 @@ import json
 import os
 from datetime import datetime
 from functools import wraps
-from typing import Set, Optional, Union, Dict, Any, Callable, final, List
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import Optional
+from typing import Set
+from typing import Union
+from typing import final
 
 import pytz
 from apscheduler.schedulers.asyncio import AsyncIOScheduler as Scheduler
 
 import ajenga
-from ajenga.models.message import Message_T
-from ajenga.protocol import Api
-from ajenga.log import logger, Logger
-from ajenga.models.event_impl import GroupMessageEvent, GroupPermission, FriendMessageEvent, TempMessageEvent
-from ajenga_app import app
 import ajenga.router as router
-from ajenga_router.graph import Graph, TerminalNode
-from ajenga_router.keyfunc import KeyFunction, KeyFunctionImpl, PredicateFunction
+from ajenga.event import Event
+from ajenga.event import EventType
+from ajenga.event import FriendMessageEvent
+from ajenga.event import GroupMessageEvent
+from ajenga.event import GroupPermission
+from ajenga.event import MetaEventType
+from ajenga.event import TempMessageEvent
+from ajenga.log import Logger
+from ajenga.log import logger
+from ajenga.message import Message_T
+from ajenga.protocol import Api
+from ajenga_app import app
 from ajenga_router import std
-from ajenga_router.std import EqualNode, make_graph_deco, PredicateNode, HandlerNode
-from ajenga.models.event import EventType, Event
-from ajenga.models.meta import MetaEventType
+from ajenga_router.graph import Graph
+from ajenga_router.graph import TerminalNode
+from ajenga_router.keyfunc import PredicateFunction
+from ajenga_router.std import HandlerNode
+from ajenga_router.std import PredicateNode
 
 _loaded_services: Dict[str, "Service"] = {}
 _tmp_current_plugin: Optional["Plugin"] = None
@@ -356,6 +369,7 @@ class Service:
                     self.logger.error(f'{type(e)} occurred when doing scheduled job {func.__name__}.')
 
             return self.scheduler.scheduled_job(*args, **kwargs)(wrapper)
+
         return deco
 
     async def broadcast(self, *messages: Message_T, interval=0.2):

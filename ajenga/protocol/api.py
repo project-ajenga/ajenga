@@ -1,8 +1,15 @@
 from abc import ABC
-from typing import Optional, Awaitable, Union, Generic, TypeVar, List
+from typing import Generic
+from typing import List
+from typing import Optional
+from typing import TypeVar
 
-from ajenga.models.contact import Friend, Group, GroupMember, GroupConfig
-from ajenga.models.message import Message_T, MessageIdType
+from ajenga.message import MessageIdType
+from ajenga.message import Message_T
+from ajenga.models import Friend
+from ajenga.models import Group
+from ajenga.models import GroupConfig
+from ajenga.models import GroupMember
 
 T = TypeVar('T')
 

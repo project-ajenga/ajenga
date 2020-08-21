@@ -1,8 +1,13 @@
+import hashlib
 from abc import ABC
 from enum import Enum
-from typing import Optional, List, Dict, Any, Union, Type, TypeVar, Iterable, Tuple
-
-import hashlib
+from typing import Iterable
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Type
+from typing import TypeVar
+from typing import Union
 
 MessageIdType = int
 ImageIdType = str
@@ -10,7 +15,6 @@ VoiceIdType = str
 
 
 class MessageType(Enum):
-
     Meta = "Meta"
     Plain = "Plain"
     At = "At"
@@ -203,6 +207,7 @@ class Plain(MessageElement):
 class At(MessageElement):
     type: MessageType = MessageType.At
     target: int
+
     # display: str
 
     def __init__(self, qq: int = None, **kwargs):

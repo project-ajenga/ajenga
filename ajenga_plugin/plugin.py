@@ -4,17 +4,24 @@ import json
 import os
 import sys
 from types import ModuleType
-from typing import Optional, Union, List, Dict, Set
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Set
+from typing import Union
 
 import ajenga
-from ajenga.log import logger, Logger
-from ajenga.models.meta import MetaEvent, MetaEventType
+from ajenga.event import MetaEvent
+from ajenga.event import MetaEventType
+from ajenga.log import Logger
+from ajenga.log import logger
 from ajenga_app import meta_provider
-from . import Service, set_current_plugin, remove_service
+from . import Service
+from . import remove_service
+from . import set_current_plugin
 
 
 class Plugin:
-
     name: str
     author: Union[str, List[str]]
     version: str

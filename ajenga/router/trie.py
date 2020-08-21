@@ -1,11 +1,22 @@
-from typing import List, Any, Set, Callable, Dict, Iterable, Union, AsyncIterable, final, Hashable
+from typing import AsyncIterable
+from typing import Callable
+from typing import Dict
+from typing import Hashable
+from typing import Iterable
+from typing import Union
+from typing import final
 
 import pygtrie
 
-from ajenga_router.graph import NonterminalNode, Node, TerminalNode, AbsNode
-from ajenga_router.keyfunc import KeyFunction, first_argument, KeyFunctionImpl
-from ajenga_router.keystore import KeyStore
 from ajenga.log import logger
+from ajenga_router.graph import AbsNode
+from ajenga_router.graph import Node
+from ajenga_router.graph import NonterminalNode
+from ajenga_router.graph import TerminalNode
+from ajenga_router.keyfunc import KeyFunction
+from ajenga_router.keyfunc import KeyFunctionImpl
+from ajenga_router.keyfunc import first_argument
+from ajenga_router.keystore import KeyStore
 
 
 class AbsTrieNonterminalNode(NonterminalNode, AbsNode):

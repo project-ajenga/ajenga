@@ -1,4 +1,14 @@
-from .service import Service, Privilege, set_current_plugin, remove_service
-from .plugin import Plugin, get_plugin, get_current_plugin, get_loaded_plugins, \
-    load_plugin, unload_plugin, reload_plugin
-from .res import ensure_file_path, DirectoryType, get_plugin_dir
+from .service import Privilege
+from .service import Service
+from .service import remove_service
+from .service import set_current_plugin
+from .plugin import Plugin
+from .plugin import get_current_plugin
+from .plugin import get_loaded_plugins
+from .plugin import get_plugin
+from .plugin import load_plugin
+from .plugin import reload_plugin
+from .plugin import unload_plugin
+from .res import DirectoryType
+from .res import ensure_file_path
+from .res import get_plugin_dir

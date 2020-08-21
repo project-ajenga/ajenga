@@ -1,8 +1,7 @@
-from enum import Enum
-
-from ajenga.models.event import Event, EventType, EventProvider
-from ajenga.models.message import MessageChain, MessageType
-from ajenga.models.contact import GroupPermission
+from ajenga.event import Event
+from ajenga.event import EventType
+from ajenga.message import MessageChain
+from ajenga.models import GroupPermission
 
 
 class Sender:

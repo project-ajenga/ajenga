@@ -1,5 +1,9 @@
-from typing import List, Any, Set, Callable, Dict, Iterator, Iterable, AsyncIterable, final
-from .graph import Graph, NonterminalNode, IdentityNode, TerminalNode
+from typing import AsyncIterable
+from typing import Iterable
+from typing import final
+
+from .graph import Graph
+from .graph import TerminalNode
 from .keystore import KeyStore
 from .std import HandlerNode
 
@@ -9,6 +13,7 @@ class GraphImpl(Graph):
     """Graph implementation supports __call__ as decorator
 
     """
+
     def __init__(self, graph, **kwargs):
         super().__init__(**kwargs)
         self._graph = graph

@@ -1,8 +1,9 @@
 from functools import partial
 
-from ajenga_router.keyfunc import KeyFunction, KeyFunctionImpl
-from ajenga_router.std import PredicateNode, EqualNode, make_graph_deco
 from ajenga.router.trie import PrefixNode
+from ajenga_router.keyfunc import KeyFunctionImpl
+from ajenga_router.std import EqualNode
+from ajenga_router.std import make_graph_deco
 
 key_event_type = KeyFunctionImpl(lambda event: event.type)
 key_meta_type = KeyFunctionImpl(lambda event: event.meta_type)

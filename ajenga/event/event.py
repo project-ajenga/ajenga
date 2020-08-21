@@ -3,7 +3,6 @@ from enum import Enum
 
 
 class EventType(Enum):
-
     # Meta
     Internal = "Internal"
     Protocol = "Protocol"
@@ -47,7 +46,6 @@ MessageEventTypes = [
 
 
 class Event(dict, ABC):
-
     type: EventType
 
     def __getattr__(self, item):

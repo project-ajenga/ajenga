@@ -1,22 +1,41 @@
 from abc import ABC
-from typing import List, Any, Set, Callable, Dict, Iterator, Iterable, Union, Awaitable, AsyncIterable, final, Hashable, \
-    Type
 from functools import partial
+from typing import Any
+from typing import AsyncIterable
+from typing import Callable
+from typing import Dict
+from typing import Hashable
+from typing import Iterable
+from typing import Set
+from typing import Tuple
+from typing import Type
+from typing import final
 
 from . import logger
 from .exceptions import RouteException
+from .graph import AbsNode
+from .graph import Graph
+from .graph import IdentityNode
+from .graph import Node
+from .graph import NonterminalNode
+from .graph import TerminalNode
+from .keyfunc import KeyFunction
+from .keyfunc import KeyFunctionImpl
+from .keyfunc import KeyFunction_T
+from .keyfunc import PredicateFunction_T
+from .keyfunc import first_argument
 from .keystore import KeyStore
-from .utils import run_async, wrap_function
-from .graph import NonterminalNode, TerminalNode, IdentityNode, Node, Graph, AbsNode
-from .keyfunc import KeyFunction, KeyFunctionImpl, first_argument
+from .utils import wrap_function
 
 
 @final
 class HandlerNode(TerminalNode, AbsNode):
-    _func: Callable
+    args: Tuple
+    kwargs: Dict
 
-    def __init__(self, func, *args, **kwargs):
+    def __init__(self, func: Callable, *args, **kwargs):
         super().__init__()
+        self._original_func = func
         self._func = wrap_function(func)
         self.args = args
         self.kwargs = kwargs
@@ -25,7 +44,10 @@ class HandlerNode(TerminalNode, AbsNode):
         return repr(self._func)
 
     def copy(self) -> "HandlerNode":
-        return HandlerNode(self._func, *self.args, **self.kwargs)
+        return HandlerNode(self._original_func, *self.args, **self.kwargs)
+
+    def __call__(self, *args, **kwargs):
+        return self._original_func(*args, **kwargs)
 
     async def forward(self, *args, **kwargs) -> Any:
         return await self._func(*args, **kwargs)
@@ -140,7 +162,7 @@ class AbsNonterminalNode(NonterminalNode, AbsNode, ABC):
 
 
 class PredicateNode(AbsNonterminalNode):
-    def __init__(self, *predicates: Union[KeyFunction[bool], Callable[..., bool]]):
+    def __init__(self, *predicates: PredicateFunction_T):
         super().__init__()
         for predicate in predicates:
             if isinstance(predicate, KeyFunction):
@@ -169,7 +191,7 @@ class PredicateNode(AbsNonterminalNode):
 
 
 class EqualNode(AbsNonterminalNode):
-    def __init__(self, *values, key: Union[KeyFunction, Callable] = first_argument, key_id=None):
+    def __init__(self, *values, key: KeyFunction_T = first_argument, key_id=None):
         super().__init__()
         if isinstance(key, KeyFunction):
             self._key = key
@@ -212,7 +234,7 @@ class EqualNode(AbsNonterminalNode):
 
 @final
 class ProcessorNode(AbsNonterminalNode):
-    def __init__(self, *processors: Union[KeyFunction, Callable], **kwargs):
+    def __init__(self, *processors: KeyFunction_T, **kwargs):
         super().__init__(**kwargs)
         for processor in processors:
             if isinstance(processor, KeyFunction):
@@ -279,4 +301,5 @@ def store_(name: str, func: Callable) -> Graph:
 def handler(*args, **kwargs) -> Callable:
     def deco(func: Callable) -> HandlerNode:
         return HandlerNode(func, *args, **kwargs)
+
     return deco

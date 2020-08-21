@@ -1,6 +1,10 @@
 import asyncio
-
-from typing import Dict, TypeVar, Union, Any, Mapping, Hashable
+from typing import Any
+from typing import Dict
+from typing import Hashable
+from typing import Mapping
+from typing import TypeVar
+from typing import Union
 
 from .keyfunc import KeyFunction
 
@@ -59,4 +63,3 @@ class _NoneKeyStore(KeyStore):
 
 
 none_key_store = _NoneKeyStore()
-

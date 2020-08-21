@@ -1,24 +1,33 @@
 import re
 from functools import partial
+from typing import Any
+from typing import AsyncIterable
+from typing import Callable
+from typing import Dict
+from typing import Pattern
+from typing import Tuple
+from typing import Type
+from typing import TypeVar
+from typing import Union
+from typing import final
 
-from typing import Type, AsyncIterable, Callable, Any, Union, Awaitable, TypeVar, Pattern
-
-from ajenga_router.graph import TerminalNode, NonterminalNode
-from ajenga_router.keyfunc import KeyFunctionImpl
-from ajenga_router.keystore import KeyStore
 import ajenga_router.std as std
-from ajenga_router.std import PredicateNode, EqualNode, make_graph_deco, AbsNonterminalNode
-from ajenga_router.utils import run_async
-
-from ajenga.models.event import MessageEventTypes, EventType
-from ajenga.models.event_impl import MessageEvent
-from ajenga.models.message import MessageElement, MessageType
-
-from ajenga.log import logger
-
+from ajenga.event import EventType
+from ajenga.event import MessageEventTypes
+from ajenga.message import MessageElement
+from ajenga.message import MessageType
+from ajenga_router.graph import AbsNode
+from ajenga_router.graph import NonterminalNode
+from ajenga_router.graph import TerminalNode
+from ajenga_router.keyfunc import KeyFunctionImpl
+from ajenga_router.keyfunc import PredicateFunction_T
+from ajenga_router.keystore import KeyStore
+from ajenga_router.std import AbsNonterminalNode
+from ajenga_router.std import EqualNode
+from ajenga_router.std import make_graph_deco
+from ajenga_router.utils import wrap_function
 from . import event_type_is
 from .trie import PrefixNode
-
 
 key_message_content_string = KeyFunctionImpl(lambda event: event.message.content_string())
 key_message_content_string_stripped = KeyFunctionImpl(lambda event: event.message.content_string().strip())
@@ -47,14 +56,14 @@ def equals(text: str, *texts: str, strip: bool = True):
     if strip:
         return make_graph_deco(EqualNode)(text, *texts, key=key_message_content_string_stripped)
     else:
-        return make_graph_deco(EqualNode)(text, *texts,  key=key_message_content_string)
+        return make_graph_deco(EqualNode)(text, *texts, key=key_message_content_string)
 
 
 def startswith(text: str, *texts: str, strip: bool = True):
     if strip:
-        return make_graph_deco(PrefixNode)(text, *texts,  key=key_message_content_string_stripped)
+        return make_graph_deco(PrefixNode)(text, *texts, key=key_message_content_string_stripped)
     else:
-        return make_graph_deco(PrefixNode)(text, *texts,  key=key_message_content_string)
+        return make_graph_deco(PrefixNode)(text, *texts, key=key_message_content_string)
 
 
 def endswith(text: str, *texts: str, strip: bool = True):
@@ -80,6 +89,7 @@ def match(pattern: Pattern):
 M = TypeVar('M', bound=MessageElement)
 
 
+@final
 class MessageTypeNode(AbsNonterminalNode):
     def __init__(self,
                  msg_type: Union[Type[MessageElement], MessageType] = ...,

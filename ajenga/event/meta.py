@@ -1,10 +1,10 @@
 from enum import Enum
 
-from ajenga.models.event import Event, EventType, EventProvider
+from ajenga.event import Event
+from ajenga.event import EventType
 
 
 class MetaEventType(Enum):
-
     ServiceLoaded = "ServiceLoaded"
     ServiceUnload = "ServiceUnload"
 

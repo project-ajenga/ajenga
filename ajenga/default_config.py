@@ -1,4 +1,6 @@
-from typing import Container, Dict, Any
+from typing import Any
+from typing import Container
+from typing import Dict
 
 PLUGIN_INFO_FILE: str = 'plugin.json'
 
