@@ -1,17 +1,19 @@
 from abc import ABC
-from nntplib import GroupInfo
 from typing import Optional, Awaitable, Union, Generic, TypeVar, List
 
-from typish import NoneType
-
-from ajenga.models.contact import Friend, Group, GroupMember
-from ajenga.models.message import Message_T, Image, MessageIdType
+from ajenga.models.contact import Friend, Group, GroupMember, GroupConfig
+from ajenga.models.message import Message_T, MessageIdType
 
 T = TypeVar('T')
 
 
-class ApiError(Exception):
-    pass
+class Code:
+    Success = 0
+    Unspecified = -1
+    Unavailable = -2
+    IncorrectArgument = -5
+    RequestError = -10
+    NetworkError = -20
 
 
 class ApiResult(Generic[T]):
@@ -19,9 +21,9 @@ class ApiResult(Generic[T]):
     _message: str
     _data: T
 
-    def __init__(self, code: int, message: str, data: T):
+    def __init__(self, code: int, data: T = None, message: str = None):
         self._code = code
-        self._message = message
+        self._message = message or ''
         self._data = data
 
     @property
@@ -59,7 +61,7 @@ class Api(ABC):
     async def send_group_message(self, group: int, message: Message_T) -> ApiResult[MessageSendResult]:
         raise NotImplementedError
 
-    async def recall(self, message_id: MessageIdType) -> ApiResult[NoneType]:
+    async def recall(self, message_id: MessageIdType) -> ApiResult[None]:
         raise NotImplementedError
 
     async def get_friend_list(self) -> ApiResult[List[Friend]]:
@@ -71,26 +73,26 @@ class Api(ABC):
     async def get_group_member_list(self, group: int) -> ApiResult[List[GroupMember]]:
         raise NotImplementedError
 
-    async def set_group_mute(self, group: int, qq: Optional[int]) -> ApiResult[NoneType]:
+    async def set_group_mute(self, group: int, qq: Optional[int]) -> ApiResult[None]:
         raise NotImplementedError
 
-    async def set_group_unmute(self, group: int, qq: Optional[int]) -> ApiResult[NoneType]:
+    async def set_group_unmute(self, group: int, qq: Optional[int]) -> ApiResult[None]:
         raise NotImplementedError
 
-    async def set_group_kick(self, group: int, qq: int) -> ApiResult[NoneType]:
+    async def set_group_kick(self, group: int, qq: int) -> ApiResult[None]:
         raise NotImplementedError
 
-    async def set_group_leave(self, group: int) -> ApiResult[NoneType]:
+    async def set_group_leave(self, group: int) -> ApiResult[None]:
         raise NotImplementedError
 
-    async def get_group_config(self, group: int) -> ApiResult[GroupInfo]:
+    async def get_group_config(self, group: int) -> ApiResult[GroupConfig]:
         raise NotImplementedError
 
-    async def set_group_config(self, group: int, config: dict) -> ApiResult[NoneType]:
+    async def set_group_config(self, group: int, config: GroupConfig) -> ApiResult[None]:
         raise NotImplementedError
 
     async def get_group_member_info(self, group: int, qq: int) -> ApiResult[GroupMember]:
         raise NotImplementedError
 
-    async def set_group_member_info(self, group: int, qq: int, info: dict) -> ApiResult[NoneType]:
+    async def set_group_member_info(self, group: int, qq: int, info: dict) -> ApiResult[None]:
         raise NotImplementedError

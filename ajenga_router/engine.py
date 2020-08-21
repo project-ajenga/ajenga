@@ -14,13 +14,13 @@ class GraphImpl(Graph):
         self._graph = graph
 
     def apply(self, terminal: TerminalNode = None) -> "Graph":
-        if not isinstance(terminal, TerminalNode):
-            terminal = HandlerNode(terminal)
         return super().apply(terminal)
 
     def __call__(self, func) -> TerminalNode:
         if self.closed:
             raise ValueError("Cannot call on a closed graph!")
+        if not isinstance(func, TerminalNode):
+            func = HandlerNode(func)
         g = self.apply(func)
         self._graph |= g
         return func

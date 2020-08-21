@@ -27,20 +27,23 @@ class Plugin:
     logger: Logger
 
     def __init__(self,
-                 info):
+                 info: Dict,
+                 path: str = ''):
         self.name = info['name']
         self.author = info['author']
         self.version = info['version']
         self.usage = info['usage']
         self.module = None
-        self.path = ''
+        self.path = path
         self.services = {}
         self.logger = ajenga.log.get_logger(self.name)
+        self.loaded = False
 
     def load(self,
              module: ModuleType):
         self.module = module
         self.path = module.__name__
+        self.loaded = True
 
     def add_service(self, service):
         self.services[service.name] = service
@@ -50,19 +53,21 @@ class Plugin:
 _loaded_plugins: Dict[str, Plugin] = {}
 
 
-def add_plugin(plugin: Plugin) -> None:
+def add_plugin(plugin: Plugin, force: bool = False) -> None:
     """Register a Plugin
 
     :param plugin: Plugin object
+    :param force: Ignore existed
     :return:
     """
-    if plugin.path in _loaded_plugins:
+    if not force and plugin.path in _loaded_plugins:
         logger.warning(f"Plugin {plugin} already exists")
         return
 
     if plugin.name:
         _loaded_plugins[plugin.name] = plugin
-    _loaded_plugins[plugin.path] = plugin
+    if plugin.path:
+        _loaded_plugins[plugin.path] = plugin
 
 
 def remove_plugin(key: Union[str, Plugin]) -> bool:
@@ -107,9 +112,7 @@ async def load_plugin(*, module_path: str = None, plugin_dir: str = None) -> Opt
         else:
             plugin_dir = './' + module_path.replace('.', '/')
     else:
-        if not plugin_dir:
-            raise ValueError()
-        elif plugin_dir.startswith('.'):
+        if plugin_dir.startswith('.'):
             module_path = plugin_dir.replace('/', '.')[1:]
         else:
             module_path = plugin_dir.replace('/', '.')
@@ -124,8 +127,9 @@ async def load_plugin(*, module_path: str = None, plugin_dir: str = None) -> Opt
         if plugin_info.get('name') and get_plugin(plugin_info['name']):
             logger.error(f'Plugin {plugin_info["name"]} already exists')
             return None
-        plugin = Plugin(plugin_info)
+        plugin = Plugin(plugin_info, path=module_path)
         set_current_plugin(plugin)
+        add_plugin(plugin)
     except Exception as e:
         logger.exception(e)
         logger.error(f'Failed to load Plugin config from {plugin_dir}')
@@ -134,7 +138,7 @@ async def load_plugin(*, module_path: str = None, plugin_dir: str = None) -> Opt
     try:
         module = importlib.import_module(module_path)
         plugin.load(module)
-        add_plugin(plugin)
+        add_plugin(plugin, True)
     except Exception as e:
         logger.exception(e)
         logger.error(f'Failed to load Plugin module from {module_path}')

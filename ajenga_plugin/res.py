@@ -3,7 +3,7 @@ from typing import Optional
 
 import ajenga
 from ajenga.log import logger
-from . import get_plugin, Service, Plugin
+from . import get_plugin, Service, Plugin, get_current_plugin
 
 
 class DirectoryType:
@@ -18,6 +18,8 @@ def get_plugin_dir(pl, dtype) -> Optional[str]:
         plugin = pl.plugin
     elif isinstance(pl, Plugin):
         plugin = pl
+    elif not pl:
+        plugin = get_current_plugin(depth=2)
     else:
         plugin = get_plugin(pl)
     if not plugin:
@@ -47,6 +49,8 @@ def get_plugin_dir(pl, dtype) -> Optional[str]:
 
 
 def ensure_file_path(pl, dtype, path, *paths, as_abs: bool = False, as_url: bool = False) -> Optional[str]:
+    if not pl:
+        pl = get_current_plugin(depth=2)
     root_path = get_plugin_dir(pl, dtype)
     file_path = os.path.join(root_path, path, *paths)
     file_path = os.path.normpath(file_path)

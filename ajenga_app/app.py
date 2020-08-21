@@ -52,11 +52,11 @@ class BotSession(EventProvider):
 
     async def _send(self, event: MessageEvent, message: Message_T):
         if isinstance(event, GroupMessageEvent):
-            await self.api.send_group_message(group=event.group, message=message)
+            return await self.api.send_group_message(group=event.group, message=message)
         elif isinstance(event, FriendMessageEvent):
-            await self.api.send_friend_message(qq=event.sender.qq, message=message)
+            return await self.api.send_friend_message(qq=event.sender.qq, message=message)
         elif isinstance(event, TempMessageEvent):
-            await self.api.send_temp_message(qq=event.sender.qq, group=event.group, message=message)
+            return await self.api.send_temp_message(qq=event.sender.qq, group=event.group, message=message)
 
     def wrap_message(self, message: MessageElement) -> MessageElement:
         raise NotImplementedError

@@ -1,6 +1,6 @@
 from abc import ABC
 from enum import Enum
-from typing import Optional, List, Dict, Any, Union, Type, TypeVar, Iterable
+from typing import Optional, List, Dict, Any, Union, Type, TypeVar, Iterable, Tuple
 
 import hashlib
 
@@ -95,22 +95,47 @@ class MessageChain(List[MessageElement]):
     def content_string(self) -> str:
         return ''.join(x.content_string() for x in self).strip()
 
-    def get_first(self, msg_type: Type[M] = MessageElement) -> Optional[M]:
-        for msg in self:
-            if isinstance(msg, msg_type):
-                return msg
-        else:
-            return None
-
-    def get(self, index: int, msg_type: Type[M] = MessageElement) -> Optional[M]:
+    def get_with_index(self,
+                       index: int,
+                       msg_type: Type[M] = MessageElement,
+                       start: int = 0,
+                       end: int = 0
+                       ) -> Optional[Tuple[M, int]]:
         _index = 0
-        for msg in self:
+        if not (0 <= start < len(self) and 0 <= end <= len(self)):
+            raise IndexError()
+        if not end:
+            end = len(self)
+        for i in range(start, end):
+            msg = self[i]
             if isinstance(msg, msg_type):
                 if index == _index:
-                    return msg
+                    return msg, i
                 _index += 1
         else:
             return None
+
+    def get(self,
+            index: int,
+            msg_type: Type[M] = MessageElement,
+            start: int = 0,
+            end: int = 0) -> Optional[M]:
+        res = self.get_with_index(index, msg_type, start, end)
+        return res[0] if res else None
+
+    def get_first_with_index(self,
+                             msg_type: Type[M] = MessageElement,
+                             start: int = 0,
+                             end: int = 0
+                             ) -> Optional[Tuple[M, int]]:
+        return self.get_with_index(0, msg_type, start, end)
+
+    def get_first(self,
+                  msg_type: Type[M] = MessageElement,
+                  start: int = 0,
+                  end: int = 0
+                  ) -> Optional[M]:
+        return self.get(0, msg_type, start, end)
 
     def __eq__(self, other):
         if isinstance(other, MessageChain) and len(self) == len(other):
