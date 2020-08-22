@@ -1,5 +1,5 @@
-from ajenga.event import Event
-from ajenga.event import EventType
+from ajenga.event.event import Event
+from ajenga.event.event import EventType
 from ajenga.message import MessageChain
 from ajenga.models import GroupPermission
 

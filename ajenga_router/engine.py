@@ -1,5 +1,6 @@
 from typing import AsyncIterable
 from typing import Iterable
+from typing import Type
 from typing import final
 
 from .graph import Graph
@@ -13,10 +14,12 @@ class GraphImpl(Graph):
     """Graph implementation supports __call__ as decorator
 
     """
+    _handler_cls: Type[TerminalNode]
 
-    def __init__(self, graph, **kwargs):
+    def __init__(self, graph, *, handler_cls: Type[TerminalNode], **kwargs):
         super().__init__(**kwargs)
         self._graph = graph
+        self._handler_cls = handler_cls
 
     def apply(self, terminal: TerminalNode = None) -> "Graph":
         return super().apply(terminal)
@@ -25,13 +28,13 @@ class GraphImpl(Graph):
         if self.closed:
             raise ValueError("Cannot call on a closed graph!")
         if not isinstance(func, TerminalNode):
-            func = HandlerNode(func)
+            func = self._handler_cls(func)
         g = self.apply(func)
         self._graph |= g
         return func
 
     def copy(self):
-        return GraphImpl(graph=self._graph, start=self.start.copy(), closed=self.closed)
+        return GraphImpl(graph=self._graph, handler_cls=self._handler_cls, start=self.start.copy(), closed=self.closed)
 
 
 class Engine:
@@ -39,16 +42,22 @@ class Engine:
 
     """
     _graph: Graph
+    _handler_cls: Type[TerminalNode]
 
-    def __init__(self):
+    def __init__(self, *, handler_cls: Type[TerminalNode] = HandlerNode):
         self._graph = Graph().apply()
+        self._handler_cls = handler_cls
 
     @property
     def graph(self) -> Graph:
         return self._graph
 
+    @property
+    def handler_cls(self) -> Type[TerminalNode]:
+        return self._handler_cls
+
     def on(self, graph: Graph) -> Graph:
-        return GraphImpl(graph=self._graph) & graph
+        return GraphImpl(graph=self._graph, handler_cls=self._handler_cls) & graph
 
     def subscribe(self, graph: Graph):
         # TODO: Subscribe does not copy the graph, thus returned frozen graph can change!

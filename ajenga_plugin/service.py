@@ -107,10 +107,10 @@ class ServiceGraphImpl(Graph):
         if self.closed:
             raise ValueError("Cannot call on a closed graph!")
         if not isinstance(func, TerminalNode):
-            func = HandlerNode(func)
+            func = app.engine.handler_cls(func)
         g = self.apply(func)
         self.sv._terminals.add(func)
-        app._engine.subscribe(g)
+        app.engine.subscribe(g)
         return func
 
     def copy(self):
@@ -170,7 +170,7 @@ class Service:
         @self.on_unload()
         def _on_unload():
             self.logger.info(f'Unloading... Unsubscribe all {len(self._terminals)} subscribers.')
-            app._engine.unsubscribe_terminals(self._terminals)
+            app.engine.unsubscribe_terminals(self._terminals)
 
             # Stop scheduler
             if self._scheduler and self._scheduler.running:

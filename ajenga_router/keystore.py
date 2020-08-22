@@ -48,6 +48,9 @@ class KeyStore:
             raise TypeError('Cannot use KeyFunction in Keystore key!')
         self._tasks[key] = value
 
+    def __contains__(self, item):
+        return item in self._tasks
+
     def items(self):
         # return map(
         #     lambda e: (e[0].key, e[1].done() and (e[1].exception() or e[1].result()))

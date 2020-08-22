@@ -9,6 +9,7 @@ from typing import Set
 from typing import Tuple
 from typing import final
 
+from .exceptions import RouteAllFilteredException
 from .exceptions import RouteFilteredException
 from .utils import as_completed
 
@@ -513,13 +514,23 @@ class Graph:
         async for terminal in self.start.route(*args, **kwargs):
             if isinstance(terminal, TerminalNode):
                 terminals.add(terminal)
-            elif isinstance(terminal, RouteFilteredException):
-                filters.add(terminal.args[0])
+            elif isinstance(terminal, RouteAllFilteredException):
+                filters.add(terminal)
             else:
                 raise ValueError(terminal)
 
-        for filter_ in filters:
-            terminals = filter(filter_, terminals)
+        if filters:
+            filters = list(filters)
+            filters.sort(key=lambda _f: _f.priority, reverse=True)
+            cur_priority = filters[0].priority
+            cont = True
+            for filter_ in filters:
+                if cur_priority == filter_.priority or cont:
+                    cur_priority = filter_.priority
+                    terminals, cont = filter_(terminals, *args, **kwargs)
+
+            if not cont:
+                return
 
         # print(terminals)
         coroutines = list(map(lambda x: x.forward(*args, **kwargs), terminals))

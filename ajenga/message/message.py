@@ -59,6 +59,7 @@ class MessageElement(ABC):
 
         :return:
         """
+        self.referer = None
         return self
 
     def to(self, bot, **kwargs) -> "MessageElement":
@@ -107,7 +108,7 @@ class MessageChain(List[MessageElement]):
                        ) -> Optional[Tuple[M, int]]:
         _index = 0
         if not (0 <= start < len(self) and 0 <= end <= len(self)):
-            raise IndexError()
+            raise IndexError
         if not end:
             end = len(self)
         for i in range(start, end):

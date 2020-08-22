@@ -13,7 +13,7 @@ from typing import Union
 T = typing.TypeVar("T")
 
 
-def wrap_function(func: Callable):
+def wrap_function(func: Callable[..., Union[Awaitable[T], T]]) -> Callable[..., Awaitable[T]]:
     _func = func
     _async = asyncio.iscoroutinefunction(func)
 

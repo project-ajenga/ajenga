@@ -3,7 +3,7 @@ from typing import Any
 
 import PIL.Image
 
-from ajenga.message import *
+from ajenga.message.message import *
 
 
 class Builder:

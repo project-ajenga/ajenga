@@ -2,6 +2,7 @@ from abc import ABC
 from functools import partial
 from typing import Any
 from typing import AsyncIterable
+from typing import Awaitable
 from typing import Callable
 from typing import Dict
 from typing import Hashable
@@ -28,26 +29,24 @@ from .keystore import KeyStore
 from .utils import wrap_function
 
 
-@final
-class HandlerNode(TerminalNode, AbsNode):
+class RawHandlerNode(TerminalNode, AbsNode):
     args: Tuple
     kwargs: Dict
 
-    def __init__(self, func: Callable, *args, **kwargs):
+    def __init__(self, func: Callable[..., Awaitable], *args, **kwargs):
         super().__init__()
-        self._original_func = func
-        self._func = wrap_function(func)
+        self._func = func
         self.args = args
         self.kwargs = kwargs
 
     def __repr__(self):
         return repr(self._func)
 
-    def copy(self) -> "HandlerNode":
-        return HandlerNode(self._original_func, *self.args, **self.kwargs)
+    def copy(self) -> "RawHandlerNode":
+        return RawHandlerNode(self._func, *self.args, **self.kwargs)
 
     def __call__(self, *args, **kwargs):
-        return self._original_func(*args, **kwargs)
+        return self._func(*args, **kwargs)
 
     async def forward(self, *args, **kwargs) -> Any:
         return await self._func(*args, **kwargs)
@@ -57,6 +56,22 @@ class HandlerNode(TerminalNode, AbsNode):
             return f'{" ":{indent}}<Func {str(self)}: {self._func.__name__}>'
         else:
             return f'{" ":{indent}}<Func : {self._func.__name__}>'
+
+
+@final
+class HandlerNode(RawHandlerNode):
+    args: Tuple
+    kwargs: Dict
+
+    def __init__(self, func: Callable, *args, **kwargs):
+        super().__init__(wrap_function(func), *args, **kwargs)
+        self._original_func = func
+
+    def copy(self) -> "HandlerNode":
+        return HandlerNode(self._original_func, *self.args, **self.kwargs)
+
+    def __call__(self, *args, **kwargs):
+        return self._original_func(*args, **kwargs)
 
 
 class AbsNonterminalNode(NonterminalNode, AbsNode, ABC):
@@ -294,8 +309,13 @@ process = make_graph_deco(ProcessorNode)
 suspend = make_graph_deco(SuspendNode)
 
 
-def store_(name: str, func: Callable) -> Graph:
-    return make_graph_deco(ProcessorNode)(KeyFunctionImpl(func, key=name))
+def store_(name: str = None, func: Callable = None, **kwargs) -> Graph:
+    g = Graph()
+    if name and func:
+        g |= make_graph_deco(ProcessorNode)(KeyFunctionImpl(func, key=name))
+    for _name, _func in kwargs.items():
+        g |= make_graph_deco(ProcessorNode)(KeyFunctionImpl(_func, key=_name))
+    return g
 
 
 def handler(*args, **kwargs) -> Callable:
