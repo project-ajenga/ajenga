@@ -4,6 +4,7 @@ from typing import Optional
 from ajenga.event import Event
 from ajenga.event import EventProvider
 from ajenga.log import logger
+from ajenga.models import ContactIdType
 from ajenga_router.engine import Engine
 
 
@@ -39,15 +40,14 @@ async def handle_event(source: EventProvider, event: Event, **kwargs):
 from ajenga_app.provider import BotSession
 from ajenga_app.ctx import ContextHandlerNode
 
-
 engine = Engine(handler_cls=ContextHandlerNode)
-_sessions: Dict[int, BotSession] = {}
-_sessions_inverse: Dict[int, int] = {}
+_sessions: Dict[ContactIdType, BotSession] = {}
+_sessions_inverse: Dict[int, ContactIdType] = {}
 
 on = engine.on
 
 
-def register_session(session: BotSession, qq: int = None):
+def register_session(session: BotSession, qq: ContactIdType = None):
     qq = qq or session.qq
     if qq in _sessions:
         logger.warning(f'A session already registered to {qq} !')
@@ -55,7 +55,7 @@ def register_session(session: BotSession, qq: int = None):
     _sessions_inverse[id(session)] = qq
 
 
-def unregister_session(qq: int) -> bool:
+def unregister_session(qq: ContactIdType) -> bool:
     if qq in _sessions:
         try:
             del _sessions_inverse[id(_sessions[qq])]
@@ -68,9 +68,9 @@ def unregister_session(qq: int) -> bool:
         return False
 
 
-def get_session(qq: int) -> Optional[BotSession]:
+def get_session(qq: ContactIdType) -> Optional[BotSession]:
     return _sessions.get(qq)
 
 
-def get_sessions() -> Dict[int, BotSession]:
+def get_sessions() -> Dict[ContactIdType, BotSession]:
     return _sessions.copy()

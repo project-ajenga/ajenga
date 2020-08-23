@@ -1,11 +1,7 @@
 import re
 from functools import partial
-from typing import Any
 from typing import AsyncIterable
-from typing import Callable
-from typing import Dict
 from typing import Pattern
-from typing import Tuple
 from typing import Type
 from typing import TypeVar
 from typing import Union
@@ -13,19 +9,20 @@ from typing import final
 
 import ajenga_router.std as std
 from ajenga.event import EventType
+from ajenga.event import FriendMessageEvent
+from ajenga.event import GroupMessageEvent
+from ajenga.event import MessageEvent
 from ajenga.event import MessageEventTypes
+from ajenga.event import TempMessageEvent
 from ajenga.message import MessageElement
 from ajenga.message import MessageType
-from ajenga_router.graph import AbsNode
 from ajenga_router.graph import NonterminalNode
 from ajenga_router.graph import TerminalNode
 from ajenga_router.keyfunc import KeyFunctionImpl
-from ajenga_router.keyfunc import PredicateFunction_T
 from ajenga_router.keystore import KeyStore
 from ajenga_router.std import AbsNonterminalNode
 from ajenga_router.std import EqualNode
 from ajenga_router.std import make_graph_deco
-from ajenga_router.utils import wrap_function
 from . import event_type_is
 from .trie import PrefixNode
 
@@ -37,7 +34,7 @@ key_message_content_string_reversed_stripped = KeyFunctionImpl(
     lambda event: event.message.content_string()[::-1].strip())
 
 key_message_qq = KeyFunctionImpl(lambda event: event.message.sender.qq)
-key_message_group = KeyFunctionImpl(lambda event: event.message.group)
+key_message_group = KeyFunctionImpl(lambda event: event.group)
 key_message_permission = KeyFunctionImpl(lambda event: event.message.sender.permission)
 
 is_message = event_type_is(*MessageEventTypes)
@@ -119,3 +116,14 @@ class MessageTypeNode(AbsNonterminalNode):
 
 def has(msg_type: Type[MessageElement], *or_more: Type[MessageElement]):
     return make_graph_deco(MessageTypeNode)(msg_type, *or_more)
+
+
+def same_event_as(ev: MessageEvent):
+    if isinstance(ev, GroupMessageEvent):
+        return is_group & group_from(ev.group)
+    elif isinstance(ev, FriendMessageEvent):
+        return is_friend & qq_from(ev.sender.qq)
+    elif isinstance(ev, TempMessageEvent):
+        return is_temp & qq_from(ev.sender.qq)
+    else:
+        raise TypeError

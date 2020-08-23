@@ -1,6 +1,4 @@
 import asyncio
-from typing import Dict
-from typing import Optional
 
 from ajenga.event import Event
 from ajenga.event import EventProvider
@@ -9,11 +7,11 @@ from ajenga.event import GroupMessageEvent
 from ajenga.event import MessageEvent
 from ajenga.event import MetaEvent
 from ajenga.event import TempMessageEvent
-from ajenga.log import logger
 from ajenga.message import At
 from ajenga.message import MessageChain
 from ajenga.message import MessageElement
 from ajenga.message import Message_T
+from ajenga.models import ContactIdType
 from ajenga.protocol import Api
 from ajenga_app.app import handle_event
 
@@ -30,7 +28,7 @@ meta_provider = MetaProvider()
 class BotSession(EventProvider):
 
     @property
-    def qq(self) -> int:
+    def qq(self) -> ContactIdType:
         raise NotImplementedError
 
     async def handle_event(self, event: Event):

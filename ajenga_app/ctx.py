@@ -19,7 +19,6 @@ from ajenga_router.exceptions import RouteAllFilteredException
 from ajenga_router.graph import AbsNode
 from ajenga_router.graph import Graph
 from ajenga_router.graph import TerminalNode
-from ajenga_router.keyfunc import RawKeyFunctionImpl
 from ajenga_router.keystore import KeyStore
 from ajenga_router.utils import wrap_function
 

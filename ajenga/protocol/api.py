@@ -49,6 +49,12 @@ class ApiResult(Generic[T]):
     def data(self) -> T:
         return self._data
 
+    def __repr__(self):
+        return repr(self.__dict__)
+
+    def __str__(self):
+        return repr(self)
+
 
 class MessageSendResult:
     message_id: int

@@ -1,5 +1,8 @@
+import copy
 import hashlib
 from abc import ABC
+from dataclasses import dataclass
+from dataclasses import field
 from enum import Enum
 from typing import Iterable
 from typing import List
@@ -9,6 +12,9 @@ from typing import Type
 from typing import TypeVar
 from typing import Union
 
+from ajenga.models import ContactIdType
+
+RefererIdType = Optional[int]
 MessageIdType = int
 ImageIdType = str
 VoiceIdType = str
@@ -34,27 +40,15 @@ class MessageType(Enum):
     Unknown = "Unknown"
 
 
+@dataclass
 class MessageElement(ABC):
     type: MessageType
+    referer: RefererIdType = field(default=None, init=False)
 
-    @property
-    def referer(self):
-        return self._referer
+    def copy(self):
+        return copy.deepcopy(self)
 
-    @referer.setter
-    def referer(self, value):
-        self._referer = value
-
-    def __init__(self):
-        self._referer = None
-
-    def __repr__(self):
-        return repr(self.__dict__)
-
-    def __str__(self):
-        return repr(self)
-
-    def raw(self) -> "MessageElement":
+    def raw(self) -> "Optional[MessageElement]":
         """Convert bot dependent message into universal raw message
 
         :return:
@@ -62,7 +56,7 @@ class MessageElement(ABC):
         self.referer = None
         return self
 
-    def to(self, bot, **kwargs) -> "MessageElement":
+    def to(self, bot, **kwargs) -> "Optional[MessageElement]":
         """Convert universal message into bot dependent message
 
         :return:
@@ -82,7 +76,7 @@ class MessageChain(List[MessageElement]):
         if msgs is ...:
             pass
         elif isinstance(msgs, str):
-            self.append(Plain(text=msgs, type=MessageType.Plain.value))
+            self.append(Plain(text=msgs))
         elif isinstance(msgs, MessageChain):
             self.extend(msgs)
         elif isinstance(msgs, MessageElement):
@@ -152,51 +146,46 @@ class MessageChain(List[MessageElement]):
             return False
 
     def copy(self) -> "MessageChain":
-        return MessageChain(filter(lambda x: not isinstance(x, Meta), self))
+        # return MessageChain(filter(lambda x: not isinstance(x, Meta), self))
+        return copy.deepcopy(self)
 
     def raw(self) -> "MessageChain":
         """Convert bot dependent message into universal raw message
 
         :return:
         """
-        return MessageChain(map(lambda x: x.raw(), self))
+        return MessageChain(filter(None, map(lambda x: x.raw(), self)))
 
     def to(self, bot, **kwargs) -> "MessageChain":
         """Convert universal message into bot dependent message
 
         :return:
         """
-        return MessageChain(map(lambda x: x.to(bot, **kwargs), self))
+        return MessageChain(filter(None, map(lambda x: x.to(bot, **kwargs), self)))
 
 
+@dataclass
 class Meta(MessageElement):
-    type: MessageType = MessageType.Meta
+    type: MessageType = field(default=MessageType.Meta, init=False)
 
 
+@dataclass
 class Quote(MessageElement):
-    type: MessageType = MessageType.Quote
-    id_: MessageIdType
+    type: MessageType = field(default=MessageType.Quote, init=False)
+    id: MessageIdType
     # senderId: int
     # targetId: int
     # groupId: int
-    origin: MessageChain
-
-    def __init__(self, id_: MessageIdType, origin=None, **kwargs):
-        super().__init__()
-        self.id_ = id_
-        self.origin = origin
+    origin: MessageChain = None
 
     def __eq__(self, other):
-        return isinstance(other, Quote) and self.id_ == other.id_
+        return isinstance(other, Quote) and self.id == other.id
 
 
+@dataclass
 class Plain(MessageElement):
-    type: MessageType = MessageType.Plain
+    type: MessageType = field(default=MessageType.Plain, init=False)
     text: str
-
-    def __init__(self, text: str = None, **kwargs):
-        super().__init__()
-        self.text = text
 
     def content_string(self) -> str:
         return self.text
@@ -205,102 +194,84 @@ class Plain(MessageElement):
         return isinstance(other, Plain) and self.text == other.text
 
 
+@dataclass
 class At(MessageElement):
-    type: MessageType = MessageType.At
-    target: int
+    type: MessageType = field(default=MessageType.At, init=False)
+    target: ContactIdType
 
     # display: str
-
-    def __init__(self, qq: int = None, **kwargs):
-        super().__init__()
-        self.target = qq
 
     def __eq__(self, other):
         return isinstance(other, At) and self.target == other.target
 
 
+@dataclass
 class AtAll(MessageElement):
-    type: MessageType = MessageType.AtAll
+    type: MessageType = field(default=MessageType.AtAll, init=False)
 
     def __eq__(self, other):
-        return isinstance(other, MessageElement) and self.type == other.type
+        return isinstance(other, AtAll)
 
 
+@dataclass
 class Face(MessageElement):
-    type: MessageType = MessageType.Face
-    id_: int
-
-    def __init__(self, id_: int = None, **kwargs):
-        super().__init__()
-        self.id_ = id_
+    type: MessageType = field(default=MessageType.Face, init=False)
+    id: int
 
     def __eq__(self, other):
-        return isinstance(other, Face) and self.id_ == other.id_
+        return isinstance(other, Face) and self.id == other.id
 
 
+@dataclass
 class Image(MessageElement):
-    type: MessageType = MessageType.Image
-    # id_: Optional[ImageIdType]
-    hash_: str
-    url: Optional[str]
-    content: Optional[bytes]
+    type: MessageType = field(default=MessageType.Image, init=False)
+    # id: Optional[ImageIdType]
+    hash: Optional[str] = None
+    url: Optional[str] = None
+    content: Optional[bytes] = None
 
-    def __init__(self, *, url: str = None, content: bytes = None, hash_: str = None, **kwargs):
-        super().__init__()
-        self.url = url
-        self.content = content
-        self.hash_ = hash_
+    def __post_init__(self):
+        if self.content and not self.hash:
+            self.hash = hashlib.md5(self.content).hexdigest()
 
-    @property
-    def content(self) -> bytes:
-        return self._content
-
-    @content.setter
-    def content(self, value):
-        self._content = value
+    def set_content(self, value):
+        self.content = value
         if value:
-            self.hash_ = hashlib.md5(self.content).hexdigest()
+            self.hash = hashlib.md5(self.content).hexdigest()
 
     def __eq__(self, other):
         return isinstance(other, Image) and any((
-            self.hash_ and self.hash_ == other.hash_,
+            self.hash and self.hash == other.hash,
             self.url and self.url == other.url,
             self.content and self.content == other.content
         ))
 
 
+@dataclass
 class Voice(MessageElement):
-    type: MessageType = MessageType.Voice
-    # id_: Optional[VoiceIdType]
-    hash_: str
-    url: Optional[str]
-    content: Optional[bytes]
-
-    def __init__(self, url: str = None, content: bytes = None, hash_: str = None, **kwargs):
-        super().__init__()
-        self.url = url
-        self.content = content
-        self.hash_ = hash_
+    type: MessageType = field(default=MessageType.Voice, init=False)
+    # id: Optional[VoiceIdType]
+    hash: Optional[str] = None
+    url: Optional[str] = None
+    content: Optional[bytes] = None
 
     def __eq__(self, other):
         return isinstance(other, Voice) and any((
-            self.hash_ and self.hash_ == other.hash_,
+            self.hash and self.hash == other.hash,
             self.url and self.url == other.url,
             self.content and self.content == other.content
         ))
 
 
+@dataclass
 class App(MessageElement):
-    type: MessageType = MessageType.App
-    content: dict
-
-    def __init__(self, content: dict = None, **kwargs):
-        super().__init__()
-        self.content = content
+    type: MessageType = field(default=MessageType.App, init=False)
+    content: dict = None
 
 
+@dataclass
 class Unknown(MessageElement):
-    type: MessageType = MessageType.Unknown
+    type: MessageType = field(default=MessageType.Unknown, init=False)
 
 
 MessageElement_T = Union[MessageElement, str]

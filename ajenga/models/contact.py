@@ -1,4 +1,7 @@
+from dataclasses import dataclass
 from enum import Enum
+
+ContactIdType = int
 
 
 class GroupPermission(Enum):
@@ -8,56 +11,27 @@ class GroupPermission(Enum):
     NONE = ""
 
 
+@dataclass
 class Group:
-    id_: int
+    id: ContactIdType
     name: str
     permission: GroupPermission
 
-    def __init__(self, *, id_: int, name: str, permission: GroupPermission = GroupPermission.MEMBER):
-        self.id_ = id_
-        self.name = name
-        self.permission = permission
 
-    def __repr__(self):
-        return repr(self.__dict__)
-
-    def __str__(self):
-        return repr(self)
-
-
+@dataclass
 class GroupMember:
-    id_: int
+    id: ContactIdType
     name: str
     permission: GroupPermission
 
-    def __init__(self, *, id_: int, name: str, permission: GroupPermission = GroupPermission.MEMBER):
-        self.id_ = id_
-        self.name = name
-        self.permission = permission
 
-    def __repr__(self):
-        return repr(self.__dict__)
-
-    def __str__(self):
-        return repr(self)
-
-
+@dataclass
 class GroupConfig:
     pass
 
 
+@dataclass
 class Friend:
-    id_: int
+    id: ContactIdType
     name: str
     remark: str
-
-    def __init__(self, *, id_: int, name: str, remark: str = ''):
-        self.id_ = id_
-        self.name = name
-        self.remark = remark or name
-
-    def __repr__(self):
-        return repr(self.__dict__)
-
-    def __str__(self):
-        return repr(self)

@@ -1,67 +1,64 @@
+from dataclasses import dataclass
+from dataclasses import field
+
 from ajenga.event.event import Event
 from ajenga.event.event import EventType
 from ajenga.message import MessageChain
+from ajenga.message import MessageIdType
+from ajenga.models import ContactIdType
 from ajenga.models import GroupPermission
 
 
+@dataclass
 class Sender:
-    qq: int
+    qq: ContactIdType
     name: str
-    permission: GroupPermission
-
-    def __init__(self, *, qq: int, name: str, permission: GroupPermission = GroupPermission.NONE):
-        self.qq = qq
-        self.name = name
-        self.permission = permission
-
-    def __repr__(self):
-        return repr(self.__dict__)
-
-    def __str__(self):
-        return repr(self)
+    permission: GroupPermission = field(default=GroupPermission.NONE)
 
 
+@dataclass
 class MessageEvent(Event):
     message: MessageChain
-    message_id: int
+    message_id: MessageIdType
     sender: Sender
 
 
+@dataclass
 class GroupMessageEvent(MessageEvent):
-    type: EventType = EventType.GroupMessage
-    group: int
+    type: EventType = field(default=EventType.GroupMessage, init=False)
+    group: ContactIdType
 
 
+@dataclass
 class FriendMessageEvent(MessageEvent):
-    type: EventType = EventType.FriendMessage
+    type: EventType = field(default=EventType.FriendMessage, init=False)
 
 
+@dataclass
 class TempMessageEvent(MessageEvent):
-    type: EventType = EventType.TempMessage
-    group: int
+    type: EventType = field(default=EventType.TempMessage, init=False)
+    group: ContactIdType
 
 
-class DiscussMessageEvent(MessageEvent):
-    type: EventType = EventType.DiscussMessage
-    discuss: int
-
-
+@dataclass
 class GroupRecallEvent(Event):
-    type: EventType = EventType.GroupRecall
-    qq: int
-    message_id: int
-    operator: int
-    group: int
+    type: EventType = field(default=EventType.GroupRecall, init=False)
+    qq: ContactIdType
+    message_id: MessageIdType
+    operator: ContactIdType
+    group: ContactIdType
 
 
+@dataclass
 class GroupMuteEvent(Event):
-    type: EventType = EventType.GroupMute
-    qq: int
-    operator: int
+    type: EventType = field(default=EventType.GroupMute, init=False)
+    qq: ContactIdType
+    operator: ContactIdType
     duration: int
 
 
+@dataclass
 class GroupUnmuteEvent(Event):
-    type: EventType = EventType.GroupUnmute
-    qq: int
-    operator: int
+    type: EventType = field(default=EventType.GroupUnmute, init=False)
+    qq: ContactIdType
+    operator: ContactIdType

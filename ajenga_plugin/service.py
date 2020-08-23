@@ -21,18 +21,19 @@ from ajenga.event import EventType
 from ajenga.event import FriendMessageEvent
 from ajenga.event import GroupMessageEvent
 from ajenga.event import GroupPermission
+from ajenga.event import MessageEvent
 from ajenga.event import MetaEventType
 from ajenga.event import TempMessageEvent
 from ajenga.log import Logger
 from ajenga.log import logger
 from ajenga.message import Message_T
+from ajenga.models import ContactIdType
 from ajenga.protocol import Api
 from ajenga_app import app
 from ajenga_router import std
 from ajenga_router.graph import Graph
 from ajenga_router.graph import TerminalNode
 from ajenga_router.keyfunc import PredicateFunction
-from ajenga_router.std import HandlerNode
 from ajenga_router.std import PredicateNode
 
 _loaded_services: Dict[str, "Service"] = {}
@@ -284,7 +285,7 @@ class Service:
                 return Privilege.PRIVATE_GROUP
         return Privilege.DEFAULT
 
-    async def get_user_priv_in_group(self, qq: int, event: GroupMessageEvent, api: Api):
+    async def get_user_priv_in_group(self, qq: ContactIdType, event: GroupMessageEvent, api: Api):
         priv = self.get_user_priv(qq)
         if priv == Privilege.BLACK:
             return priv
@@ -299,14 +300,14 @@ class Service:
             else:
                 return max(priv, Privilege.GROUP)
 
-    def get_user_priv(self, qq_or_event: Union[int, Event]) -> int:
-        if isinstance(qq_or_event, int):
+    def get_user_priv(self, qq_or_event: Union[ContactIdType, MessageEvent]) -> int:
+        if isinstance(qq_or_event, ContactIdType):
             if qq_or_event in ajenga.config.SUPERUSERS:
                 return Privilege.SUPERUSER
             else:
                 return self.user_privs.get(qq_or_event, Privilege.DEFAULT)
-        elif isinstance(qq_or_event, Event):
-            qq = qq_or_event.qq
+        elif isinstance(qq_or_event, MessageEvent):
+            qq = qq_or_event.sender.qq
             ev_priv = self.get_priv_from_event(qq_or_event)
             sv_priv = self.user_privs.get(qq, Privilege.DEFAULT)
             if qq in ajenga.config.SUPERUSERS:
@@ -319,29 +320,29 @@ class Service:
             self.logger.error(f'Unknown qq_or_event {qq_or_event}')
             return Privilege.DEFAULT
 
-    def set_user_priv(self, qq_or_event: Union[int, Event], priv: int):
+    def set_user_priv(self, qq_or_event: Union[ContactIdType, MessageEvent], priv: int):
         # print(self.user_privs)
         if isinstance(qq_or_event, int):
             self.user_privs[qq_or_event] = priv
-        elif isinstance(qq_or_event, Event):
-            self.user_privs[qq_or_event.qq] = priv
+        elif isinstance(qq_or_event, MessageEvent):
+            self.user_privs[qq_or_event.sender.qq] = priv
         else:
             self.logger.error(f'Unknown qq_or_event {qq_or_event}')
         _save_service_config(self)
 
-    def set_enable(self, group: int):
+    def set_enable(self, group: ContactIdType):
         self.enable_group.add(group)
         self.disable_group.discard(group)
         _save_service_config(self)
         self.logger.info(f'Service {self.name} is enabled at group {group}')
 
-    def set_disable(self, group: int):
+    def set_disable(self, group: ContactIdType):
         self.enable_group.discard(group)
         self.disable_group.add(group)
         _save_service_config(self)
         self.logger.info(f'Service {self.name} is disabled at group {group}')
 
-    def check_enabled(self, group: int):
+    def check_enabled(self, group: ContactIdType):
         return bool((group in self.enable_group) or (self.enable_on_default and group not in self.disable_group))
 
     async def get_enabled_groups(self) -> dict:
@@ -349,8 +350,8 @@ class Service:
         for qq, ses in app.get_sessions().items():
             group_list = await ses.api.get_group_list()
             for group in group_list.data:
-                if self.check_enabled(group.id_):
-                    ret[group.id_] = qq
+                if self.check_enabled(group.id):
+                    ret[group.id] = qq
         return ret
 
     def scheduled_job(self, *args, **kwargs) -> Callable:

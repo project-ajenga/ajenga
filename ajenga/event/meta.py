@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from dataclasses import field
 from enum import Enum
 
 from ajenga.event import Event
@@ -12,8 +14,18 @@ class MetaEventType(Enum):
     PluginUnload = "PluginUnload"
 
 
+@dataclass(init=False)
 class MetaEvent(Event):
-    type: EventType = EventType.Meta
+    type: EventType = field(default=EventType.Meta, init=False)
+    _dict: dict = field(default_factory=dict, init=False)
 
     def __init__(self, meta_type, **kwargs):
-        super().__init__(meta_type=meta_type, **kwargs)
+        self.type = EventType.Meta
+        self._dict = {}
+        self._dict.update({
+            'meta_type': meta_type,
+            **kwargs
+        })
+
+    def __getattr__(self, item):
+        return self._dict[item]

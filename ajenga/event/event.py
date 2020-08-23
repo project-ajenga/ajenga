@@ -1,4 +1,5 @@
 from abc import ABC
+from dataclasses import dataclass
 from enum import Enum
 
 
@@ -14,12 +15,11 @@ class EventType(Enum):
     GroupMessage = "GroupMessage"
     FriendMessage = "FriendMessage"
     TempMessage = "TempMessage"
-    DiscussMessage = "DiscussMessage"
 
     # Event
     GroupRecall = "GroupRecall"
 
-    ImageUpload = "ImageUpload"
+    # ImageUpload = "ImageUpload"
 
     BotLeaveGroup = "BotLeaveGroup"
     BotJoinGroup = "BotJoinGroup"
@@ -41,15 +41,12 @@ MessageEventTypes = [
     EventType.FriendMessage,
     EventType.GroupMessage,
     EventType.TempMessage,
-    EventType.DiscussMessage,
 ]
 
 
-class Event(dict, ABC):
+@dataclass
+class Event(ABC):
     type: EventType
-
-    def __getattr__(self, item):
-        return self.get(item)
 
 
 class EventProvider(ABC):
