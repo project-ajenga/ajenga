@@ -32,11 +32,12 @@ class MessageType(Enum):
     Voice = "Voice"
     App = "App"
     Json = "Json"
+    Xml = "Xml"
 
     # Not fully supported yet
     # FlashImage = "FlashImage"
     # Poke = "Poke"
-    # Xml = "Xml"
+
     Unknown = "Unknown"
 
 
@@ -101,8 +102,10 @@ class MessageChain(List[MessageElement]):
                        end: int = 0
                        ) -> Optional[Tuple[M, int]]:
         _index = 0
+        if not self:
+            return None
         if not (0 <= start < len(self) and 0 <= end <= len(self)):
-            raise IndexError
+            raise IndexError(f'{start=} {end=} len={len(self)}')
         if not end:
             end = len(self)
         for i in range(start, end):
@@ -267,6 +270,12 @@ class Voice(MessageElement):
 class App(MessageElement):
     type: MessageType = field(default=MessageType.App, init=False)
     content: dict = None
+
+
+@dataclass
+class Xml(MessageElement):
+    type: MessageType = field(default=MessageType.Xml, init=False)
+    content: str
 
 
 @dataclass
