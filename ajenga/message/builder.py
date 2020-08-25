@@ -69,5 +69,5 @@ class Builder:
         return self
 
     def newline(self):
-        self.append('\n')
+        self.append('\n', eol=False)
         return self

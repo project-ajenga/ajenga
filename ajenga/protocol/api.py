@@ -86,7 +86,7 @@ class Api(ABC):
     async def get_group_member_list(self, group: int) -> ApiResult[List[GroupMember]]:
         raise NotImplementedError
 
-    async def set_group_mute(self, group: int, qq: Optional[int]) -> ApiResult[None]:
+    async def set_group_mute(self, group: int, qq: Optional[int], duration: Optional[int]) -> ApiResult[None]:
         raise NotImplementedError
 
     async def set_group_unmute(self, group: int, qq: Optional[int]) -> ApiResult[None]:
