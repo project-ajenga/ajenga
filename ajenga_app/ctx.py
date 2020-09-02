@@ -18,6 +18,7 @@ from ajenga_router import std
 from ajenga_router.exceptions import RouteAllFilteredException
 from ajenga_router.graph import AbsNode
 from ajenga_router.graph import Graph
+from ajenga_router.graph import Node
 from ajenga_router.graph import TerminalNode
 from ajenga_router.keystore import KeyStore
 from ajenga_router.utils import wrap_function
@@ -37,7 +38,7 @@ class ContextHandlerNode(TerminalNode, AbsNode):
     def __repr__(self):
         return repr(self._func)
 
-    def copy(self) -> "ContextHandlerNode":
+    def copy(self, node_map: Dict[Node, Node] = ...) -> "ContextHandlerNode":
         return ContextHandlerNode(self._original_func, *self.args, **self.kwargs)
 
     def __call__(self, *args, **kwargs):

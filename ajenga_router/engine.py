@@ -76,7 +76,7 @@ class Engine:
         self._graph.remove_terminals(terminals)
 
     def forward(self, *args, **kwargs) -> AsyncIterable:
-        return self._graph.forward(args, KeyStore(kwargs))
+        return self._graph.copy().forward(args, KeyStore(kwargs))
 
     def clear(self):
         self._graph.clear()

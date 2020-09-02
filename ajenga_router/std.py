@@ -42,7 +42,7 @@ class RawHandlerNode(TerminalNode, AbsNode):
     def __repr__(self):
         return repr(self._func)
 
-    def copy(self) -> "RawHandlerNode":
+    def copy(self, node_map: Dict[Node, Node] = ...) -> "RawHandlerNode":
         return RawHandlerNode(self._func, *self.args, **self.kwargs)
 
     def __call__(self, *args, **kwargs):
@@ -67,7 +67,7 @@ class HandlerNode(RawHandlerNode):
         super().__init__(wrap_function(func), *args, **kwargs)
         self._original_func = func
 
-    def copy(self) -> "HandlerNode":
+    def copy(self, node_map: Dict[Node, Node] = ...) -> "HandlerNode":
         return HandlerNode(self._original_func, *self.args, **self.kwargs)
 
     def __call__(self, *args, **kwargs):
