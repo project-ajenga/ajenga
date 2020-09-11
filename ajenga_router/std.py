@@ -309,12 +309,12 @@ process = make_graph_deco(ProcessorNode)
 suspend = make_graph_deco(SuspendNode)
 
 
-def store_(name: str = None, func: Callable = None, **kwargs) -> Graph:
+def store_(_name: str = None, _func: Callable = None, **kwargs) -> Graph:
     g = Graph()
-    if name and func:
-        g |= make_graph_deco(ProcessorNode)(KeyFunctionImpl(func, key=name))
-    for _name, _func in kwargs.items():
+    if _name and _func:
         g |= make_graph_deco(ProcessorNode)(KeyFunctionImpl(_func, key=_name))
+    for name, func in kwargs.items():
+        g |= make_graph_deco(ProcessorNode)(KeyFunctionImpl(func, key=name))
     return g
 
 

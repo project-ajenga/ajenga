@@ -22,6 +22,7 @@ from ajenga.event import FriendMessageEvent
 from ajenga.event import GroupMessageEvent
 from ajenga.event import GroupPermission
 from ajenga.event import MessageEvent
+from ajenga.event import MessageEventTypes
 from ajenga.event import MetaEventType
 from ajenga.event import TempMessageEvent
 from ajenga.log import Logger
@@ -184,20 +185,21 @@ class Service:
         self.plugin.add_service(self)
 
     def check_priv(self, event: Event, required_priv: Union[int, Callable[[int], bool]] = None):
-        required_priv = self.use_priv if required_priv is None else required_priv
-        user_priv = self.get_user_priv(event)
-        # self.logger.debug(f'Checking priv for {event}: {self.check_enabled(event.group)} {required_priv} {user_priv}')
-        if event.type == EventType.Meta:
-            return True
-        if isinstance(event, GroupMessageEvent):
-            if not self.check_enabled(event.group):
+        if event.type in MessageEventTypes:
+            required_priv = self.use_priv if required_priv is None else required_priv
+            user_priv = self.get_user_priv(event)
+
+            if isinstance(event, GroupMessageEvent):
+                if not self.check_enabled(event.group):
+                    return False
+            if isinstance(required_priv, int):
+                return bool(user_priv >= required_priv)
+            elif isinstance(required_priv, Callable):
+                return required_priv(user_priv)
+            else:
                 return False
-        if isinstance(required_priv, int):
-            return bool(user_priv >= required_priv)
-        elif isinstance(required_priv, Callable):
-            return required_priv(user_priv)
         else:
-            return False
+            return True
 
     @property
     def key(self):
