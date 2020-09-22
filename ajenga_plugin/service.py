@@ -32,8 +32,8 @@ from ajenga.models import ContactIdType
 from ajenga.protocol import Api
 from ajenga_app import app
 from ajenga_router import std
-from ajenga_router.graph import Graph
-from ajenga_router.graph import TerminalNode
+from ajenga_router.models import Graph
+from ajenga_router.models import TerminalNode
 from ajenga_router.keyfunc import PredicateFunction
 from ajenga_router.std import PredicateNode
 

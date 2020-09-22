@@ -39,8 +39,9 @@ async def handle_event(source: EventProvider, event: Event, **kwargs):
 
 from ajenga_app.provider import BotSession
 from ajenga_app.ctx import ContextHandlerNode
+from ajenga_app.ctx import PriorityExecutor
 
-engine = Engine(handler_cls=ContextHandlerNode)
+engine = Engine(handler_cls=ContextHandlerNode, executor=PriorityExecutor())
 _sessions: Dict[ContactIdType, BotSession] = {}
 _sessions_inverse: Dict[int, ContactIdType] = {}
 

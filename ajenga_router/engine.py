@@ -3,8 +3,11 @@ from typing import Iterable
 from typing import Type
 from typing import final
 
-from .graph import Graph
-from .graph import TerminalNode
+from .exceptions import RouteException
+from .models import Executor
+from .models import Graph
+from .models.executor import SimpleExecutor
+from .models import TerminalNode
 from .keystore import KeyStore
 from .std import HandlerNode
 
@@ -14,13 +17,17 @@ class Engine:
 
     """
     _graph: Graph
+    _dirty: bool
     _graph_impl: Graph
     _handler_cls: Type[TerminalNode]
 
-    def __init__(self, *, handler_cls: Type[TerminalNode] = HandlerNode):
+    def __init__(self, *,
+                 handler_cls: Type[TerminalNode] = HandlerNode,
+                 executor: Executor = SimpleExecutor()):
         self._graph = Graph().apply()
-        self._graph_impl = self._graph.copy()
+        self._dirty = True
         self._handler_cls = handler_cls
+        self._executor = executor
 
     @property
     def graph(self) -> Graph:
@@ -37,16 +44,29 @@ class Engine:
         # TODO: Subscribe does not copy the graph, thus returned frozen graph can change!
         if graph.closed:
             self._graph |= graph
-            self._graph_impl = self._graph.copy()
+            self._dirty = True
         else:
             raise ValueError("Cannot subscribe an open graph!")
 
     def unsubscribe_terminals(self, terminals: Iterable[TerminalNode]):
         self._graph.remove_terminals(terminals)
-        self._graph_impl = self._graph.copy()
+        self._dirty = True
 
-    def forward(self, *args, **kwargs) -> AsyncIterable:
-        return self._graph_impl.forward(args, KeyStore(kwargs))
+    async def forward(self, *args, **kwargs) -> AsyncIterable:
+        if self._dirty:
+            self._graph_impl = self._graph.copy()
+            self._dirty = False
+
+        store = KeyStore(kwargs)
+        routed = await self._graph_impl.route(args, store)
+        terminals = filter(lambda x: isinstance(x, TerminalNode), routed)
+        exceptions = filter(lambda x: isinstance(x, RouteException), routed)
+
+        for res in exceptions:
+            yield res.args[0]
+
+        async for res in self._executor(terminals, args, store):
+            yield res
 
     def clear(self):
         self._graph.clear()

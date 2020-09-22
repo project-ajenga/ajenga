@@ -9,10 +9,12 @@ from typing import final
 import pygtrie
 
 from ajenga.log import logger
-from ajenga_router.graph import AbsNode
-from ajenga_router.graph import Node
-from ajenga_router.graph import NonterminalNode
-from ajenga_router.graph import TerminalNode
+from ajenga_router.exceptions import RouteException
+from ajenga_router.exceptions import RouteInternalException
+from ajenga_router.models import AbsNode
+from ajenga_router.models import Node
+from ajenga_router.models import NonterminalNode
+from ajenga_router.models import TerminalNode
 from ajenga_router.keyfunc import KeyFunction
 from ajenga_router.keyfunc import KeyFunctionImpl
 from ajenga_router.keyfunc import first_argument
@@ -133,9 +135,11 @@ class PrefixNode(AbsTrieNonterminalNode):
     async def route(self, args, store: KeyStore) -> AsyncIterable[TerminalNode]:
         try:
             key = await store(self._key, args, store)
+        except RouteException as e:
+            yield e
+            return
         except Exception as e:
-            logger.debug(e, exc_info=True)
-            logger.error(f'Error occurred when solve key: {type(e).__name__}')
+            yield RouteInternalException(e)
             return
 
         if not isinstance(key, str):

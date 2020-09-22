@@ -12,14 +12,14 @@ from typing import Tuple
 from typing import Type
 from typing import final
 
-from . import logger
 from .exceptions import RouteException
-from .graph import AbsNode
-from .graph import Graph
-from .graph import IdentityNode
-from .graph import Node
-from .graph import NonterminalNode
-from .graph import TerminalNode
+from .exceptions import RouteInternalException
+from .models import AbsNode
+from .models import Graph
+from .models import IdentityNode
+from .models import Node
+from .models import NonterminalNode
+from .models import TerminalNode
 from .keyfunc import KeyFunction
 from .keyfunc import KeyFunctionImpl
 from .keyfunc import KeyFunction_T
@@ -193,8 +193,7 @@ class PredicateNode(AbsNonterminalNode):
                 yield e
                 continue
             except Exception as e:
-                logger.error(e, exc_info=True)
-                logger.error(f'Error occurred when run predicate {predicate}: {type(e).__name__}')
+                yield RouteInternalException(e)
                 continue
             if pred_res:
                 for node in nodes:
@@ -229,13 +228,12 @@ class EqualNode(AbsNonterminalNode):
             yield e
             return
         except Exception as e:
-            logger.error(e, exc_info=True)
-            logger.error(f'Error occurred when solve key: {type(e).__name__}')
+            yield RouteInternalException(e)
             return
 
         if not isinstance(key, Hashable):
-            logger.error(f'Key {key} to EqualNode must be Hashable!')
-            return
+            raise ValueError(f'Key {key} to EqualNode must be Hashable!')
+
         if key not in self._successors:
             return
 
@@ -264,8 +262,7 @@ class ProcessorNode(AbsNonterminalNode):
             except RouteException as e:
                 yield e
             except Exception as e:
-                logger.error(e, exc_info=True)
-                logger.error(f'Error occurred when run processor {processor}: {type(e).__name__}')
+                yield RouteInternalException(e)
                 continue
             for node in nodes:
                 if isinstance(node, TerminalNode):

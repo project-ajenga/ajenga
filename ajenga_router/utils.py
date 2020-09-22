@@ -6,6 +6,7 @@ from typing import Any
 from typing import AsyncIterable
 from typing import Awaitable
 from typing import Callable
+from typing import Collection
 from typing import Coroutine
 from typing import List
 from typing import Union
@@ -36,7 +37,7 @@ def wrap_function(func: Callable[..., Union[Awaitable[T], T]]) -> Callable[..., 
         elif param.kind == inspect.Parameter.VAR_KEYWORD:
             _kwargs_extra = True
         else:
-            raise TypeError("Invalid parameter declaration for HandlerNode !")
+            raise TypeError("Invalid parameter declaration !")
 
     @wraps(func)
     async def wrapper(args, store):
@@ -63,11 +64,14 @@ def raise_(e: BaseException):
     raise e
 
 
-async def consume_async_iterator(ait: AsyncIterable[T]) -> List[T]:
-    result = []
+async def consume_async_iterator(ait: AsyncIterable[T],
+                                 collection_factory: Callable[..., Collection[T]] = list,
+                                 collect_function: Callable[[Collection[T], T], Any] = list.append
+                                 ) -> Collection[T]:
+    collection = collection_factory()
     async for x in ait:
-        result.append(x)
-    return result
+        collect_function(collection, x)
+    return collection
 
 
 async def gather(*coroutines: Coroutine, num_workers: int = None, return_exceptions: bool = ...):

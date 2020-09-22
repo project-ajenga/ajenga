@@ -16,8 +16,8 @@ from ajenga.event import MessageEventTypes
 from ajenga.event import TempMessageEvent
 from ajenga.message import MessageElement
 from ajenga.message import MessageType
-from ajenga_router.graph import NonterminalNode
-from ajenga_router.graph import TerminalNode
+from ajenga_router.models import NonterminalNode
+from ajenga_router.models import TerminalNode
 from ajenga_router.keyfunc import KeyFunctionImpl
 from ajenga_router.keystore import KeyStore
 from ajenga_router.std import AbsNonterminalNode

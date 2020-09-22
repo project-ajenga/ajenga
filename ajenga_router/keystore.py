@@ -34,8 +34,8 @@ class KeyStore:
                 self._tasks[_key_function.key] = ret
             return ret
 
-    def get(self, key: Union[Hashable, KeyFunction]):
-        return self._tasks[key]
+    def get(self, key: Union[Hashable, KeyFunction], default=None):
+        return self._tasks.get(key, default)
 
     def update(self, other):
         self._tasks.update(other)
@@ -52,17 +52,9 @@ class KeyStore:
         return item in self._tasks
 
     def items(self):
-        # return map(
-        #     lambda e: (e[0].key, e[1].done() and (e[1].exception() or e[1].result()))
-        #     if isinstance(e[0], KeyFunction)
-        #     else e, self._tasks.items()
-        # )
         return self._tasks.items()
 
 
-class _NoneKeyStore(KeyStore):
+class NoneKeyStore(KeyStore):
     async def __call__(self, _key_function: KeyFunction[T], *args, **kwargs) -> T:
         return await _key_function(*args, **kwargs)
-
-
-none_key_store = _NoneKeyStore()
