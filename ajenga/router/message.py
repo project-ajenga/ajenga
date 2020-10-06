@@ -33,9 +33,9 @@ key_message_content_string_reversed = KeyFunctionImpl(
 key_message_content_string_reversed_stripped = KeyFunctionImpl(
     lambda event: event.message.content_string()[::-1].strip())
 
-key_message_qq = KeyFunctionImpl(lambda event: event.message.sender.qq)
+key_message_qq = KeyFunctionImpl(lambda event: event.sender.qq)
 key_message_group = KeyFunctionImpl(lambda event: event.group)
-key_message_permission = KeyFunctionImpl(lambda event: event.message.sender.permission)
+key_message_permission = KeyFunctionImpl(lambda event: event.sender.permission)
 
 is_message = event_type_is(*MessageEventTypes)
 is_friend = event_type_is(EventType.FriendMessage)
@@ -120,7 +120,7 @@ def has(msg_type: Type[MessageElement], *or_more: Type[MessageElement]):
 
 def same_event_as(ev: MessageEvent):
     if isinstance(ev, GroupMessageEvent):
-        return is_group & group_from(ev.group)
+        return is_group & group_from(ev.group) & qq_from(ev.sender.qq)
     elif isinstance(ev, FriendMessageEvent):
         return is_friend & qq_from(ev.sender.qq)
     elif isinstance(ev, TempMessageEvent):

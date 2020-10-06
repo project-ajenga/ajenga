@@ -1,10 +1,17 @@
+import asyncio
 import time
+from dataclasses import dataclass
 from typing import List
 from typing import Tuple
 
+from ajenga.event import Event
+from ajenga.event import EventProvider
+from ajenga.event import EventType
 from ajenga.message import MessageIdType
+from ajenga.message import Quote
 from ajenga_app import app
 from ajenga_app.app import BotSession
+import ajenga.router as router
 from ajenga_router import std
 from ajenga_router.keystore import KeyStore
 from ajenga_router.models import Graph
@@ -16,7 +23,19 @@ from ajenga_router.models.execution import _task_context
 
 _CANDIDATES_KEY = '_wakeup_candidates'
 _SUSPEND_OTHER_KEY = 'suspend_other'
-_SUSPEND_NEXT_PRIORITY = 'suspend_next_priority'
+_SUSPEND_NEXT_PRIORITY_KEY = 'suspend_next_priority'
+
+
+class SchedulerSource(EventProvider):
+    pass
+
+
+_scheduler_source = SchedulerSource()
+
+
+@dataclass
+class SchedulerEvent(Event):
+    type: EventType = EventType.Unknown
 
 
 class _ContextWrapperMeta(type):
@@ -28,7 +47,7 @@ class _ContextWrapperMeta(type):
 class _ContextWrapper(metaclass=_ContextWrapperMeta):
     @classmethod
     async def wait_until(cls,
-                         graph: Graph = std.true,
+                         graph: Graph,
                          *,
                          timeout: float = 3600,
                          suspend_other: bool = False,
@@ -37,7 +56,7 @@ class _ContextWrapper(metaclass=_ContextWrapperMeta):
 
         task = _task_context.get()
         task.state[_SUSPEND_OTHER_KEY] = suspend_other
-        task.state[_SUSPEND_NEXT_PRIORITY] = suspend_next_priority
+        task.state[_SUSPEND_NEXT_PRIORITY_KEY] = suspend_next_priority
 
         async def _check_timeout():
             cur_time = time.time()
@@ -47,23 +66,60 @@ class _ContextWrapper(metaclass=_ContextWrapperMeta):
                 return False
             return True
 
-        async def _set_suspend(_store: KeyStore):
+        async def _add_candidate(_store: KeyStore):
             if _CANDIDATES_KEY not in _store:
                 _store[_CANDIDATES_KEY] = []
             _store[_CANDIDATES_KEY].append((task, _dumpy_node))
 
         @app.on(std.if_(_check_timeout) &
                 graph &
-                std.process(_set_suspend))
+                std.process(_add_candidate))
         @std.handler(priority=Priority.Never)
         async def _dumpy_node():
             pass
 
+        async def _set_timeout():
+            await asyncio.sleep(timeout)
+            await app.handle_event(_scheduler_source, SchedulerEvent())
+
+        asyncio.create_task(_set_timeout())
+
         await task.pause()
 
     @classmethod
-    async def wait_quote(cls, source: BotSession, id_: MessageIdType):
-        raise NotImplementedError
+    async def wait_next(cls,
+                        graph: Graph = std.true,
+                        *,
+                        timeout: float = 3600,
+                        suspend_other: bool = False,
+                        suspend_next_priority: bool = False,
+                        ):
+        return await cls.wait_until(router.message.same_event_as(this.event) & graph,
+                                    timeout=timeout,
+                                    suspend_other=suspend_other,
+                                    suspend_next_priority=suspend_next_priority
+                                    )
+
+    @classmethod
+    async def wait_quote(cls,
+                         message_id: MessageIdType = ...,
+                         bot: BotSession = ...,
+                         graph: Graph = std.true,
+                         *,
+                         timeout: float = 3600,
+                         suspend_other: bool = False,
+                         suspend_next_priority: bool = False,
+                         ):
+        message_id = this.event.message_id if message_id is ... else message_id
+        bot = this.bot if bot is ... else bot
+        return await cls.wait_until(router.message.has(Quote)
+                                    & std.if_(lambda event, source: event.message.get_first(Quote).id == message_id
+                                              and source == bot)
+                                    & graph,
+                                    timeout=timeout,
+                                    suspend_other=suspend_other,
+                                    suspend_next_priority=suspend_next_priority
+                                    )
 
     @classmethod
     def suspend_next_priority(cls):
@@ -87,7 +143,7 @@ async def _check_wait(_store: KeyStore):
     while not _suspend_other and candidates:
         candidate, dumpy_node = candidates.pop()
         _suspend_other = candidate.state[_SUSPEND_OTHER_KEY]
-        _suspend_next_priority |= candidate.state[_SUSPEND_NEXT_PRIORITY]
+        _suspend_next_priority |= candidate.state[_SUSPEND_NEXT_PRIORITY_KEY]
         _wakeup(candidate, dumpy_node)
 
     if _suspend_next_priority:
