@@ -1,14 +1,16 @@
 from typing import AsyncIterable
+from typing import Callable
 from typing import Iterable
 from typing import Type
 from typing import final
 
 from .exceptions import RouteException
+from .keystore import KeyStore
 from .models import Executor
 from .models import Graph
-from .models.executor import SimpleExecutor
+from .models import Priority
 from .models import TerminalNode
-from .keystore import KeyStore
+from .models.execution import PriorityExecutor
 from .std import HandlerNode
 
 
@@ -23,11 +25,12 @@ class Engine:
 
     def __init__(self, *,
                  handler_cls: Type[TerminalNode] = HandlerNode,
-                 executor: Executor = SimpleExecutor()):
+                 executor_factory: Callable[[Iterable[TerminalNode]], Executor] = PriorityExecutor,
+                 ):
         self._graph = Graph().apply()
         self._dirty = True
         self._handler_cls = handler_cls
-        self._executor = executor
+        self._executor_factory = executor_factory
 
     @property
     def graph(self) -> Graph:
@@ -65,7 +68,13 @@ class Engine:
         for res in exceptions:
             yield res.args[0]
 
-        async for res in self._executor(terminals, args, store):
+        executor = self._executor_factory()
+
+        for terminal in terminals:
+            executor.create_task(terminal.forward,
+                                 priority=terminal.priority if hasattr(terminal, 'priority') else Priority.Default)
+
+        async for res in executor.run(args, store):
             yield res
 
     def clear(self):

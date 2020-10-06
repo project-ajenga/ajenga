@@ -35,15 +35,17 @@ class RawHandlerNode(TerminalNode, AbsNode):
 
     def __init__(self, func: Callable[..., Awaitable], *args, **kwargs):
         super().__init__()
+        for key, value in kwargs.items():
+            setattr(self, key, value)
         self._func = func
-        self.args = args
-        self.kwargs = kwargs
+        self._args = args
+        self._kwargs = kwargs
 
     def __repr__(self):
         return repr(self._func)
 
     def copy(self, node_map: Dict[Node, Node] = ...) -> "RawHandlerNode":
-        return RawHandlerNode(self._func, *self.args, **self.kwargs)
+        return RawHandlerNode(self._func, *self._args, **self._kwargs)
 
     def __call__(self, *args, **kwargs):
         return self._func(*args, **kwargs)
@@ -68,7 +70,7 @@ class HandlerNode(RawHandlerNode):
         self._original_func = func
 
     def copy(self, node_map: Dict[Node, Node] = ...) -> "HandlerNode":
-        return HandlerNode(self._original_func, *self.args, **self.kwargs)
+        return HandlerNode(self._original_func, *self._args, **self._kwargs)
 
     def __call__(self, *args, **kwargs):
         return self._original_func(*args, **kwargs)

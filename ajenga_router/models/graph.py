@@ -4,8 +4,6 @@ from typing import Iterable
 from typing import Set
 
 from ajenga_router.exceptions import RouteException
-from .executor import Executor
-from .executor import SimpleExecutor
 from .node import IdentityNode
 from .node import Node
 from .node import NonterminalNode
