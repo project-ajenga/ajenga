@@ -4,20 +4,20 @@ from dataclasses import dataclass
 from typing import List
 from typing import Tuple
 
+import ajenga.router as router
 from ajenga.event import Event
 from ajenga.event import EventProvider
 from ajenga.event import EventType
 from ajenga.message import MessageIdType
 from ajenga.message import Quote
-from ajenga_app import app
+import ajenga_app.app as app
 from ajenga_app.app import BotSession
-import ajenga.router as router
 from ajenga_router import std
 from ajenga_router.keystore import KeyStore
 from ajenga_router.models import Graph
+from ajenga_router.models import Priority
 from ajenga_router.models import Task
 from ajenga_router.models import TerminalNode
-from ajenga_router.models.execution import Priority
 from ajenga_router.models.execution import _executor_context
 from ajenga_router.models.execution import _task_context
 
@@ -40,8 +40,17 @@ class SchedulerEvent(Event):
 
 class _ContextWrapperMeta(type):
 
-    def __getattr__(cls, item):
+    def __getattr__(self, item):
         return _task_context.get().args[1][item]
+
+    def __setattr__(self, key, value):
+        _task_context.get().args[1][key] = value
+
+    def __getitem__(self, item):
+        return self.__getattr__(item)
+
+    def __setitem__(self, key, value):
+        self.__setattr__(key, value)
 
 
 class _ContextWrapper(metaclass=_ContextWrapperMeta):
@@ -61,7 +70,7 @@ class _ContextWrapper(metaclass=_ContextWrapperMeta):
         async def _check_timeout():
             cur_time = time.time()
             if cur_time - task.last_active_time > timeout:
-                task.raise_(TimeoutError)
+                task.raise_(TimeoutError())
                 app.engine.unsubscribe_terminals([_dumpy_node])
                 return False
             return True
@@ -114,7 +123,7 @@ class _ContextWrapper(metaclass=_ContextWrapperMeta):
         bot = this.bot if bot is ... else bot
         return await cls.wait_until(router.message.has(Quote)
                                     & std.if_(lambda event, source: event.message.get_first(Quote).id == message_id
-                                              and source == bot)
+                                                                    and source == bot)
                                     & graph,
                                     timeout=timeout,
                                     suspend_other=suspend_other,

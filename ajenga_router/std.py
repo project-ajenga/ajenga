@@ -274,24 +274,6 @@ class ProcessorNode(AbsNonterminalNode):
                         yield terminal
 
 
-@final
-class SuspendNode(AbsNonterminalNode):
-    def __init__(self, *exceptions: RouteException, **kwargs):
-        super().__init__(**kwargs)
-        for exception in exceptions:
-            self.add_key(exception)
-
-    async def route(self, args, store: KeyStore) -> AsyncIterable[TerminalNode]:
-        for exception, nodes in self._successors.items():
-            yield exception
-            for node in nodes:
-                if isinstance(node, TerminalNode):
-                    yield node
-                elif isinstance(node, NonterminalNode):
-                    async for terminal in node.route(args, store):
-                        yield terminal
-
-
 def make_graph_deco(node_cls: Type[NonterminalNode]) -> Callable[..., Graph]:
     def deco(*args, **kwargs):
         return Graph() & node_cls(*args, **kwargs)
@@ -304,8 +286,6 @@ equals = make_graph_deco(EqualNode)
 if_ = make_graph_deco(PredicateNode)
 is_ = partial(make_graph_deco(EqualNode), key=KeyFunctionImpl(lambda _x_: type(_x_)))
 process = make_graph_deco(ProcessorNode)
-# suspend = lambda e: make_graph_deco(ProcessorNode)(lambda: raise_(e))
-suspend = make_graph_deco(SuspendNode)
 
 
 def store_(_name: str = None, _func: Callable = None, **kwargs) -> Graph:

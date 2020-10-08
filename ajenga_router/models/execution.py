@@ -12,9 +12,8 @@ from ..pqueue import PriorityQueue
 
 class Priority:
     Max = 10000
-    Wakeup = 100
+    Wakeup = 1000
     Default = 0
-    Sleep = -100
     Min = -10000
     Never = -99999
 
@@ -215,16 +214,15 @@ class PriorityExecutor(Executor):
                     self.running_priority = task.priority
                     self.running_futures.add(task.run(*args, **kwargs))
                 else:
-                    if not self.next_priority or self.waiting_priority == Priority.Never:
-                        break
-                    self.running_priority = self.waiting_priority
+                    if self.next_priority and self.waiting_priority > Priority.Never:
+                        self.running_priority = self.waiting_priority
 
-                    while self.waiting_tasks \
-                            and len(self.running_futures) < self.max_workers \
-                            and self.waiting_priority >= self.running_priority:
-                        task = self.waiting_tasks.pop()
-                        self.running_priority = task.priority
-                        self.running_futures.add(task.run(*args, **kwargs))
+                        while self.waiting_tasks \
+                                and len(self.running_futures) < self.max_workers \
+                                and self.waiting_priority >= self.running_priority:
+                            task = self.waiting_tasks.pop()
+                            self.running_priority = task.priority
+                            self.running_futures.add(task.run(*args, **kwargs))
 
                 if not self.running_futures:
                     break

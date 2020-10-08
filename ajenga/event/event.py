@@ -7,6 +7,7 @@ class EventType(Enum):
     # Meta
     Internal = "Internal"
     Protocol = "Protocol"
+    Scheduler = "Scheduler"
     Meta = "Meta"
 
     # Bot
@@ -18,21 +19,19 @@ class EventType(Enum):
 
     # Event
     GroupRecall = "GroupRecall"
+    FriendRecall = "FriendRecall"
 
-    # ImageUpload = "ImageUpload"
-
-    BotLeaveGroup = "BotLeaveGroup"
-    BotJoinGroup = "BotJoinGroup"
     BotGroupPermissionChange = "BotGroupPermissionChange"
 
     GroupMute = "GroupMute"
     GroupUnmute = "GroupUnmute"
 
-    MemberLeaveGroup = "MemberLeaveGroup"
-    MemberJoinGroup = "MemberJoinGroup"
-    MemberJoinGroupRequest = "MemberJoinGroupRequest"
+    GroupJoin = "GroupJoin"
+    GroupLeave = "GroupLeave"
+    GroupJoinRequest = "GroupJoinRequest"
 
-    BotInvitedJoinGroupRequest = "BotInvitedJoinGroupRequest"
+    GroupInvitedRequest = "BotInvitedJoinGroupRequest"
+    NewFriendRequest = "BotNewFriendRequest"
 
     Unknown = "Unknown"
 
