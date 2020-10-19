@@ -11,6 +11,8 @@ class EventType(Enum):
     Meta = "Meta"
 
     # Bot
+    BotOnline = "BotOnline"
+    BotOffline = "BotOffline"
 
     # Message
     GroupMessage = "GroupMessage"
@@ -21,17 +23,23 @@ class EventType(Enum):
     GroupRecall = "GroupRecall"
     FriendRecall = "FriendRecall"
 
-    BotGroupPermissionChange = "BotGroupPermissionChange"
+    GroupPermissionChange = "GroupPermissionChange"
+
+    GroupFileUpload = "GroupFileUpload"
 
     GroupMute = "GroupMute"
     GroupUnmute = "GroupUnmute"
 
     GroupJoin = "GroupJoin"
     GroupLeave = "GroupLeave"
-    GroupJoinRequest = "GroupJoinRequest"
 
+    GroupJoinRequest = "GroupJoinRequest"
     GroupInvitedRequest = "BotInvitedJoinGroupRequest"
-    NewFriendRequest = "BotNewFriendRequest"
+
+    FriendAdd = "FriendAdd"
+    FriendRemove = "FriendRemove"
+
+    FriendAddRequest = "FriendAddRequest"
 
     Unknown = "Unknown"
 

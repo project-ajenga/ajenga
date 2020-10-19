@@ -99,6 +99,18 @@ class GroupLeaveEvent(Event):
 
 
 @dataclass
+class FriendAddEvent(Event):
+    type: EventType = field(default=EventType.FriendAdd, init=False)
+    qq: ContactIdType
+
+
+@dataclass
+class FriendRemoveEvent(Event):
+    type: EventType = field(default=EventType.FriendRemove, init=False)
+    qq: ContactIdType
+
+
+@dataclass
 class RequestEvent(Event, ABC):
     async def accept(self, **kwargs):
         raise NotImplementedError
@@ -108,13 +120,6 @@ class RequestEvent(Event, ABC):
 
     async def ignore(self):
         raise NotImplementedError
-
-
-@dataclass
-class NewFriendRequestEvent(RequestEvent, ABC):
-    type: EventType = field(default=EventType.NewFriendRequest, init=False)
-    qq: ContactIdType
-    comment: str
 
 
 @dataclass
@@ -130,4 +135,11 @@ class GroupInvitedRequestEvent(RequestEvent, ABC):
     type: EventType = field(default=EventType.GroupInvitedRequest, init=False)
     operator: ContactIdType
     group: ContactIdType
+    comment: str
+
+
+@dataclass
+class FriendAddRequestEvent(RequestEvent, ABC):
+    type: EventType = field(default=EventType.FriendAddRequest, init=False)
+    qq: ContactIdType
     comment: str
