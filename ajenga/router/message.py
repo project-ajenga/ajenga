@@ -28,10 +28,14 @@ from .trie import PrefixNode
 
 key_message_content_string = KeyFunctionImpl(lambda event: event.message.content_string())
 key_message_content_string_stripped = KeyFunctionImpl(lambda event: event.message.content_string().strip())
+key_message_content_string_lstripped = KeyFunctionImpl(lambda event: event.message.content_string().lstrip())
+
 key_message_content_string_reversed = KeyFunctionImpl(
     lambda event: event.message.content_string()[::-1])
 key_message_content_string_reversed_stripped = KeyFunctionImpl(
     lambda event: event.message.content_string()[::-1].strip())
+key_message_content_string_reversed_lstripped = KeyFunctionImpl(
+    lambda event: event.message.content_string()[::-1].lstrip())
 
 key_message_qq = KeyFunctionImpl(lambda event: event.sender.qq)
 key_message_group = KeyFunctionImpl(lambda event: event.group)
@@ -58,7 +62,7 @@ def equals(text: str, *texts: str, strip: bool = True):
 
 def startswith(text: str, *texts: str, strip: bool = True):
     if strip:
-        return make_graph_deco(PrefixNode)(text, *texts, key=key_message_content_string_stripped)
+        return make_graph_deco(PrefixNode)(text, *texts, key=key_message_content_string_lstripped)
     else:
         return make_graph_deco(PrefixNode)(text, *texts, key=key_message_content_string)
 
@@ -68,7 +72,7 @@ def endswith(text: str, *texts: str, strip: bool = True):
         return make_graph_deco(PrefixNode)(
             text[::-1],
             *map(lambda x: x[::-1], texts),
-            key=key_message_content_string_reversed_stripped)
+            key=key_message_content_string_reversed_lstripped)
     else:
         return make_graph_deco(PrefixNode)(
             text[::-1],

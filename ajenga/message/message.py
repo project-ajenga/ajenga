@@ -93,7 +93,7 @@ class MessageChain(List[MessageElement]):
             raise ValueError(f'Not a valid MessageChain: {msgs}!')
 
     def content_string(self) -> str:
-        return ''.join(x.content_string() for x in self).strip()
+        return ''.join(x.content_string() for x in self).lstrip()
 
     def get_with_index(self,
                        index: int,
