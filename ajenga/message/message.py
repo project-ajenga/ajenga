@@ -64,7 +64,10 @@ class MessageElement(ABC):
         """
         return bot.wrap_message(self, **kwargs)
 
-    def content_string(self) -> str:
+    def as_plain(self) -> str:
+        return ''
+
+    def as_display(self) -> str:
         return ''
 
 
@@ -92,8 +95,11 @@ class MessageChain(List[MessageElement]):
         else:
             raise ValueError(f'Not a valid MessageChain: {msgs}!')
 
-    def content_string(self) -> str:
-        return ''.join(x.content_string() for x in self).lstrip()
+    def as_plain(self) -> str:
+        return ''.join(x.as_plain() for x in self).lstrip()
+
+    def as_display(self) -> str:
+        return ''.join(x.as_display() for x in self).lstrip()
 
     def get_with_index(self,
                        index: int,
@@ -181,6 +187,9 @@ class Quote(MessageElement):
     # groupId: int
     origin: MessageChain = None
 
+    def as_display(self) -> str:
+        return f'[引用]'
+
     def __eq__(self, other):
         return isinstance(other, Quote) and self.id == other.id
 
@@ -190,7 +199,13 @@ class Plain(MessageElement):
     type: MessageType = field(default=MessageType.Plain, init=False)
     text: str
 
-    def content_string(self) -> str:
+    def as_plain(self) -> str:
+        return self.text
+
+    def as_plain(self) -> str:
+        return self.text
+
+    def as_display(self) -> str:
         return self.text
 
     def __eq__(self, other):
@@ -202,7 +217,8 @@ class At(MessageElement):
     type: MessageType = field(default=MessageType.At, init=False)
     target: ContactIdType
 
-    # display: str
+    def as_display(self) -> str:
+        return f'@{self.target}'
 
     def __eq__(self, other):
         return isinstance(other, At) and self.target == other.target
@@ -212,6 +228,9 @@ class At(MessageElement):
 class AtAll(MessageElement):
     type: MessageType = field(default=MessageType.AtAll, init=False)
 
+    def as_display(self) -> str:
+        return f'@全体成员'
+
     def __eq__(self, other):
         return isinstance(other, AtAll)
 
@@ -220,6 +239,9 @@ class AtAll(MessageElement):
 class Face(MessageElement):
     type: MessageType = field(default=MessageType.Face, init=False)
     id: int
+
+    def as_display(self) -> str:
+        return f'[表情]'
 
     def __eq__(self, other):
         return isinstance(other, Face) and self.id == other.id
@@ -242,6 +264,9 @@ class Image(MessageElement):
         if value:
             self.hash = hashlib.md5(self.content).hexdigest()
 
+    def as_display(self) -> str:
+        return f'[图片]'
+
     def __eq__(self, other):
         return isinstance(other, Image) and any((
             self.hash and self.hash == other.hash,
@@ -258,6 +283,9 @@ class Voice(MessageElement):
     url: Optional[str] = None
     content: Optional[bytes] = None
 
+    def as_display(self) -> str:
+        return f'[语音]'
+
     def __eq__(self, other):
         return isinstance(other, Voice) and any((
             self.hash and self.hash == other.hash,
@@ -271,11 +299,17 @@ class App(MessageElement):
     type: MessageType = field(default=MessageType.App, init=False)
     content: dict = None
 
+    def as_display(self) -> str:
+        return f'[小程序]'
+
 
 @dataclass
 class Xml(MessageElement):
     type: MessageType = field(default=MessageType.Xml, init=False)
     content: str
+
+    def as_display(self) -> str:
+        return f'[Xml]'
 
 
 @dataclass

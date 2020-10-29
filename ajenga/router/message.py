@@ -26,16 +26,16 @@ from ajenga_router.std import make_graph_deco
 from . import event_type_is
 from .trie import PrefixNode
 
-key_message_content_string = KeyFunctionImpl(lambda event: event.message.content_string())
-key_message_content_string_stripped = KeyFunctionImpl(lambda event: event.message.content_string().strip())
-key_message_content_string_lstripped = KeyFunctionImpl(lambda event: event.message.content_string().lstrip())
+key_message_content_string = KeyFunctionImpl(lambda event: event.message.as_plain())
+key_message_content_string_stripped = KeyFunctionImpl(lambda event: event.message.as_plain().strip())
+key_message_content_string_lstripped = KeyFunctionImpl(lambda event: event.message.as_plain().lstrip())
 
 key_message_content_string_reversed = KeyFunctionImpl(
-    lambda event: event.message.content_string()[::-1])
+    lambda event: event.message.as_plain()[::-1])
 key_message_content_string_reversed_stripped = KeyFunctionImpl(
-    lambda event: event.message.content_string()[::-1].strip())
+    lambda event: event.message.as_plain()[::-1].strip())
 key_message_content_string_reversed_lstripped = KeyFunctionImpl(
-    lambda event: event.message.content_string()[::-1].lstrip())
+    lambda event: event.message.as_plain()[::-1].lstrip())
 
 key_message_qq = KeyFunctionImpl(lambda event: event.sender.qq)
 key_message_group = KeyFunctionImpl(lambda event: event.group)
@@ -82,7 +82,7 @@ def endswith(text: str, *texts: str, strip: bool = True):
 
 def match(pattern: Pattern):
     return std.if_(KeyFunctionImpl(
-        lambda event: re.match(pattern, event.message.content_string()),
+        lambda event: re.match(pattern, event.message.as_plain()),
         key='match',
     ))
 
