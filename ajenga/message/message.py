@@ -10,9 +10,15 @@ from typing import Optional
 from typing import Tuple
 from typing import Type
 from typing import TypeVar
+from typing import TYPE_CHECKING
 from typing import Union
 
 from ajenga.models import ContactIdType
+
+
+if TYPE_CHECKING:
+    from ajenga_app import BotSession
+
 
 RefererIdType = Optional[int]
 MessageIdType = int
@@ -49,7 +55,7 @@ class MessageElement(ABC):
     def copy(self):
         return copy.deepcopy(self)
 
-    def raw(self) -> "Optional[MessageElement]":
+    async def raw(self) -> "Optional[MessageElement]":
         """Convert bot dependent message into universal raw message
 
         :return:
@@ -57,12 +63,15 @@ class MessageElement(ABC):
         self.referer = None
         return self
 
-    def to(self, bot, **kwargs) -> "Optional[MessageElement]":
+    async def to(self, bot: "Optional[BotSession]", **kwargs) -> "Optional[MessageElement]":
         """Convert universal message into bot dependent message
 
         :return:
         """
-        return bot.wrap_message(self, **kwargs)
+        if bot is None:
+            return await self.raw()
+
+        return await bot.wrap_message(self, **kwargs)
 
     def as_plain(self) -> str:
         return ''
@@ -145,6 +154,9 @@ class MessageChain(List[MessageElement]):
                   ) -> Optional[M]:
         return self.get(0, msg_type, start, end)
 
+    # def __getitem__(self, item):
+    #     pass
+
     def __eq__(self, other):
         if isinstance(other, MessageChain) and len(self) == len(other):
             for a, b in zip(self, other):
@@ -158,19 +170,24 @@ class MessageChain(List[MessageElement]):
         # return MessageChain(filter(lambda x: not isinstance(x, Meta), self))
         return copy.deepcopy(self)
 
-    def raw(self) -> "MessageChain":
-        """Convert bot dependent message into universal raw message
-
-        :return:
-        """
-        return MessageChain(filter(None, map(lambda x: x.raw(), self)))
-
-    def to(self, bot, **kwargs) -> "MessageChain":
+    async def to(self, bot: "Optional[BotSession]", **kwargs) -> "MessageChain":
         """Convert universal message into bot dependent message
 
         :return:
         """
-        return MessageChain(filter(None, map(lambda x: x.to(bot, **kwargs), self)))
+        chain = MessageChain()
+        for msg in self:
+            msg_raw = await msg.to(bot, **kwargs)
+            if msg_raw:
+                chain.append(msg_raw)
+        return chain
+
+    async def raw(self) -> "MessageChain":
+        """Convert bot dependent message into universal raw message
+
+        :return:
+        """
+        return await self.to(None)
 
 
 @dataclass

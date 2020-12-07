@@ -62,5 +62,5 @@ class BotSession(EventProvider):
         elif isinstance(event, TempMessageEvent):
             return await self.api.send_temp_message(qq=event.sender.qq, group=event.group, message=message)
 
-    def wrap_message(self, message: MessageElement) -> MessageElement:
+    async def wrap_message(self, message: MessageElement, **kwargs) -> MessageElement:
         raise NotImplementedError

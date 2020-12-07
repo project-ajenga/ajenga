@@ -16,7 +16,7 @@ class DirectoryType:
     TEMP = 3
 
 
-def get_plugin_dir(pl, dtype) -> Optional[str]:
+def get_plugin_dir(pl, dtype: int) -> Optional[str]:
     if isinstance(pl, Service):
         plugin = pl.plugin
     elif isinstance(pl, Plugin):

@@ -25,7 +25,7 @@ class Engine:
 
     def __init__(self, *,
                  handler_cls: Type[TerminalNode] = HandlerNode,
-                 executor_factory: Callable[[Iterable[TerminalNode]], Executor] = PriorityExecutor,
+                 executor_factory: Callable[..., Executor] = PriorityExecutor,
                  ):
         self._graph = Graph().apply()
         self._dirty = True
