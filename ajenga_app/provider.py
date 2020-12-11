@@ -44,6 +44,14 @@ class BotSession(EventProvider):
         return f'<{type(self).__name__}: {id(self)}>'
 
     @property
+    def ok(self) -> bool:
+        raise NotImplementedError
+
+    @property
+    def asgi(self):
+        raise NotImplementedError
+
+    @property
     def api(self) -> Api:
         raise NotImplementedError
 
